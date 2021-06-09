@@ -1,0 +1,283 @@
+---
+title: "Predictive Analysis: First Half Semester Homework"
+author: "Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav Chhatbar"
+date: "6/6/2021"  
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Libraries
+
+```{r warning=FALSE}
+
+library(fpp2)
+
+```
+
+
+## Problem 1: HA 2.1
+
+Use the help function to explore what the series gold, woolyrnq and gas represent.
+
+**Description of each of the series:**
+
+gold: Daily morning gold prices in US dollars. 1 January 1985 – 31 March 1989.
+woolyrnq: Quarterly production of woollen yarn in Australia: tonnes. Mar 1965 – Sep 1994.
+gas: Australian monthly gas production: 1956–1995.
+
+
+a. Use autoplot() to plot each of these in separate plots.
+
+**Plotting gold**
+
+```{r}
+
+autoplot(gold)
+
+```
+
+
+**Plotting woolyrnq**
+
+```{r}
+
+autoplot(woolyrnq)
+
+```
+
+
+**Plotting gas**
+
+```{r}
+
+autoplot(gas)
+
+```
+
+
+
+b. What is the frequency of each series? Hint: apply the frequency() function.
+
+```{r}
+
+frequency(gold)
+
+```
+
+gold data are annual.
+
+
+```{r}
+
+frequency(woolyrnq)
+
+```
+woolyrnq data are quarterly
+
+
+```{r}
+
+frequency(gas)
+
+```
+
+gas data are monthly. 
+
+
+c. Use which.max() to spot the outlier in the gold series. Which observation was it?
+
+
+```{r}
+
+g <- which.max(gold)
+g
+
+```
+gold get the max value at 770
+
+Calculating gold value at t = 770:
+
+
+```{r}
+
+gold[g]
+```
+
+gold maximum value is 593.7
+
+
+## Problem 2: HA 2.3
+
+Download some monthly Australian retail data from the book website. These represent retail sales in various categories for different Australian states, and are stored in a MS-Excel file.
+
+a. You can read the data into R with the following script:
+
+```{r}
+
+retaildata <- readxl::read_excel("retail.xlsx", skip=1)
+
+```
+
+Check the head of the retail data:
+
+```{r}
+
+head(retaildata)
+
+```
+
+The second argument (skip=1) is required because the Excel sheet has two header rows.
+
+
+b. Select one of the time series as follows (but replace the column name with your own chosen column):
+
+WE are going to use the column "A3349398A"
+
+```{r}
+
+myts <- ts(retaildata[,"A3349398A"],
+  frequency=12, start=c(1982,4))
+
+
+```
+
+
+
+c. Explore your chosen retail time series using the following functions:
+
+autoplot(), ggseasonplot(), ggsubseriesplot(), gglagplot(), ggAcf()
+
+Can you spot any seasonality, cyclicity and trend? What do you learn about the series?
+
+
+**Exploring A3349398A:"**
+
+Plotting myts autoplot
+
+```{r}
+autoplot(myts)
+
+```
+
+
+Plotting myts ggseasonplot
+
+```{r}
+ggseasonplot(myts)
+
+```
+
+
+
+Plotting myts ggsubseriesplot
+
+```{r}
+ggsubseriesplot(myts)
+
+```
+
+
+Plotting myts gglagplot
+
+```{r}
+gglagplot(myts)
+
+```
+
+Plotting mts ggAcf
+
+```{r}
+ggAcf(myts)
+
+```
+
+
+We can see that there is a long-term increase and the time series is affected by 
+a seasonal factor. Thus we observe both the **trend** and **seasonality**
+
+
+## Problem 3: HA 6.2
+
+
+The plastics data set consists of the monthly sales (in thousands) of product A for a plastics manufacturer for five years.
+
+a. Plot the time series of sales of product A. Can you identify seasonal fluctuations and/or a trend-cycle?
+
+b. Use a classical multiplicative decomposition to calculate the trend-cycle and seasonal indices.
+
+c. Do the results support the graphical interpretation from part a?
+
+d. Compute and plot the seasonally adjusted data.
+
+e. Change one observation to be an outlier (e.g., add 500 to one observation), and recompute the seasonally adjusted data. What is the effect of the outlier?
+
+f. Does it make any difference if the outlier is near the end rather than in the middle of the time series?
+
+
+
+
+
+
+## Problem 4
+
+
+
+
+
+
+
+## Problem 5
+
+
+
+
+
+
+
+
+## Problem 6
+
+
+
+
+
+
+
+## Problem 7
+
+
+
+
+
+
+## Problem 8
+
+
+
+
+
+
+
+## Problem 9
+
+
+
+
+
+
+
+## Problem 10
+
+
+
+
+
+
+
+
+## Problem 11
+
