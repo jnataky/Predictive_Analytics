@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Libraries
 
-```{r warning=FALSE}
+```{r warning=FALSE, message=FALSE}
 
 library(fpp2)
 
@@ -33,6 +33,7 @@ gas: Australian monthly gas production: 1956–1995.
 a. Use autoplot() to plot each of these in separate plots.
 
 **Plotting gold**
+
 
 ```{r}
 
@@ -207,19 +208,120 @@ The plastics data set consists of the monthly sales (in thousands) of product A 
 
 a. Plot the time series of sales of product A. Can you identify seasonal fluctuations and/or a trend-cycle?
 
+
+View the data
+```{r}
+
+plastics
+
+```
+
+Plotting tie series using autoplot function
+
+```{r}
+
+autoplot(plastics)
+
+```
+
+The data has a long-term increase so there is a trend, and it is also seasonal
+with a peak around August and September
+
+
 b. Use a classical multiplicative decomposition to calculate the trend-cycle and seasonal indices.
+
+
+Decomposing the series...
+
+```{r}
+plastics %>%decompose(type="multiplicative")%>%autoplot()
+
+```
+
 
 c. Do the results support the graphical interpretation from part a?
 
+Yes it does. It shows the increase on the trend and a seasonal fluctuations.  
+
+
 d. Compute and plot the seasonally adjusted data.
+
+We are going to use the classical multiplicative decomposition to compute for the 
+seasonally adjusted data
+
+```{r}
+
+library(seasonal)
+
+plastics %>% decompose(type="multiplicative") -> fit
+
+autoplot(plastics, series = "Data") +
+  autolayer(seasadj(fit), series="Seasonally Adjusted") +
+  xlab("Year") +
+  ylab("Monthly Sale")
+
+```
 
 e. Change one observation to be an outlier (e.g., add 500 to one observation), and recompute the seasonally adjusted data. What is the effect of the outlier?
 
+
+We going to use 50th observation (February of the 5th year) and change it
+by adding 500
+
+```{r}
+
+new_plastics <- plastics
+new_plastics[50] <- new_plastics[50] + 500
+new_plastics[50]
+
+```
+
+Recompute seasonally adjusted data:
+
+```{r}
+
+
+new_plastics %>% decompose(type="multiplicative") -> fit
+
+autoplot(new_plastics, series = "Data") +
+  autolayer(seasadj(fit), series="Seasonally Adjusted") +
+  xlab("Year") +
+  ylab("Monthly Sale")
+
+```
+
+
+The outlier affects the seasonally adjusted more than it does on the trend, 
+that's it, there is big change on the seasonally adjusted but the trend is
+affected only where the outlier is located.
+
+
 f. Does it make any difference if the outlier is near the end rather than in the middle of the time series?
 
+To answer to this question, we are going to recompute seasonally adjusted data
+with an outlier closer to the middle and compare it to the previous one where 
+the outlier was closer to the end.
 
 
 
+```{r}
+
+new_plastics <- plastics
+new_plastics[35] <- new_plastics[35] + 500
+
+new_plastics %>% decompose(type="multiplicative") -> fit
+
+autoplot(new_plastics, series = "Data") +
+  autolayer(seasadj(fit), series="Seasonally Adjusted") +
+  xlab("Year") +
+  ylab("Monthly Sale")
+
+```
+
+It makes a diffrence where the outlier is located.
+If the outlier is near the end, the seasonally adjusted plot does not change a lot
+meaning that the prior values are not impacted significantly compared to when the 
+outlier is in the middle where the seasonally adjusted is affected more.
 
 
 ## Problem 4
