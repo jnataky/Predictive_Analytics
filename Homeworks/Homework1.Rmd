@@ -324,34 +324,300 @@ meaning that the prior values are not impacted significantly compared to when th
 outlier is in the middle where the seasonally adjusted is affected more.
 
 
-## Problem 4
+## Problem 4: KJ 3.1
+
+The UC Irvine Machine Learning Repository6 contains a data set related
+to glass identification. The data consist of 214 glass samples labeled as one
+of seven class categories. There are nine predictors, including the refractive
+index and percentages of eight elements: Na, Mg, Al, Si, K, Ca, Ba, and Fe
+
+### Libraries
+
+```{r, message=FALSE, warning=FALSE}
+
+library(mlbench)
+
+```
+
+
+### The data
+
+```{r}
+data(Glass)
+
+# Rename the data
+df <- Glass
+
+str(df)
+
+```
+
+### a.
+
+Using visualizations, explore the predictor variables to understand their
+distributions as well as the relationships between predictors.
+
+We are going to plot histogram to understand the distributions. The histogram
+would display the distribution (uniform or skewed).
+For the relationship between predictors, we are going to find the 
+correlation between them and plot a correlation matrix.
+
+First, let plot histograms of each predictor:
+
+
+```{r}
+library(tidyverse)
+
+df %>%
+  gather(key, value, -c(Type)) %>%
+  ggplot(aes(value)) +
+  geom_histogram(bins = 20, fill = 'blue') +
+  facet_wrap(~key, scales ='free', ncol=3)
+
+```
+
+
+Now, we are going to use corrplot to plot the correlation between predictors.
+
+```{r}
+library(corrplot)
+
+# Drop column Type to remain with only the 9 predictors
+
+df <- subset(df, select = -c (Type))
+
+head(df)
+
+```
+
+Let calculate the correlation first
+```{r}
+
+correlations <- round(cor(df), 2)
+correlations
+```
+
+Now, let plot it:
+
+```{r}
+
+corrplot(correlations)
+
+```
+
+
+
+
+### b.
+
+Do there appear to be any outliers in the data? Are any predictors skewed?
+
+Let plot boxplot to visualize the outliers
+
+```{r}
+
+#boxplot(df)
+
+df %>%
+  gather(key, value) %>%
+  ggplot(aes(x=key, y=value)) +
+  geom_boxplot() +
+  facet_wrap(~key, scales ='free', ncol=3)
+
+```
+
+As we can see on the plot above, they appear to be outliers in the data.
+
+One thing observed from the boxplot above is that Mg looks multimodel,
+and does not present any outliers. We are going to plot its histogram below
+to visualize it.
+
+```{r}
+hist(df$Mg, main="Mg distribution")
+
+```
+
+
+Let compute the skewness to find out if there are predictors skewed.
+
+
+```{r}
+
+skewValues <- apply(df, 2, skewness)
+skewValues
+
+```
+
+From the skewness values, we can say that except Na which is a bit close to normal, 
+all the other predictors are skewed with Si being the least skewed.
+
+
+### c.
+
+Are there any relevant transformations of one or more predictors that
+might improve the classification model?
+
+BoxCox would be a good transformation, and we can also do principle components
+but he data should be centered and scaled first.
+
+That's said, we are going to do BoxCox transformation.
+As BoxCox can only be done for non null positive values, we will first add a 
+very small values to predictors containing zeros prior applying the 
+transformation.
+
+```{r}
+
+df$Ba <- df$Ba + 1.e-6
+df$Fe <- df$Fe + 1.e-6
+df$K <- df$K + 1.e-6
+df$Mg <- df$Mg + 1.e-6
+
+df_bx <- preProcess(df, method="BoxCox")
+df_bx
+
+```
+
+Let visualize the change after applying the transformation
+
+```{r}
+
+y <- predict(df_bx, df)
+
+skewValues2 <- apply(y, 2, skewness)
+skewValues2
+```
+
+
+
+## Problem 5: KJ 3.2
+
+The soybean data can also be found at the UC Irvine Machine Learning
+Repository. Data were collected to predict disease in 683 soybeans. The 35
+predictors are mostly categorical and include information on the environmental conditions (e.g., temperature, precipitation) and plant conditions (e.g., left
+spots, mold growth). The outcome labels consist of 19 distinct classes.
+
+
+
+### Explore the data
+
+Let first get an idea on the variables
+
+```{r}
+data("Soybean")
+
+df <- Soybean
+
+str(df)
+
+```
+
+### a.
+
+Investigate the frequency distributions for the categorical predictors. Are
+any of the distributions degenerate in the ways discussed earlier in this
+chapter?
+
+
+We will filter for near-zero variance predictors to find distributions 
+that are degenerated.
+
+We will output the names of predictors degenerated.
+
+```{r}
+
+df_var <- nearZeroVar(df)
+
+df_nz <- colnames(df)[df_var]
+
+df_nz
+```
+
+
+### b.
+
+Roughly 18 % of the data are missing. Are there particular predictors that
+are more likely to be missing? Is the pattern of missing data related to
+the classes?
+
+First, we are going to identify first the number of missing in each variable
+and arrange them in descending order of number of missing values
+
+```{r}
+
+rev(sort(colSums(sapply(df, is.na))))
+
+```
+
+
+Then displaying all the levels we have in "Class" feature
+
+```{r}
+
+levels(df$Class)
+
+```
+
+Finally, see class which has more missing values then others
+
+```{r}
+
+df$nan_class = apply(df[,-1], 1, function(x){sum(is.na(x)) >0})
+
+table(df[, c(1, 34    )])
+
+```
+
+
+From the able above, we can see that the pattern of missing data related to
+the classes.
+
+
+### c. 
+
+Develop a strategy for handling missing data, either by eliminating
+predictors or imputation.
+
+
+We are going to use the caret class preProcess which has the ability
+to transform, center, scale, or impute values,...
+That said, the strategy for handling missing data would be using 
+K-nearest neighbors which is a method applied by
+preProcess function.
+
+
+```{r message=FALSE, warning=FALSE}
+
+df_cleaned <- preProcess(df, method = c("knnImpute"))
+
+# Check the number of missing values
+
+sum(is.na(df_cleaned))
+```
 
 
 
 
 
+## Problem 6: HA 7.1
 
+Consider the pigs series — the number of pigs slaughtered in Victoria each month.
 
-## Problem 5
+a. Use the ses() function in R to find the optimal values of  
+α and ℓ0, and generate forecasts for the next four months.
 
-
-
-
-
-
-
-
-## Problem 6
-
+b. Compute a 95% prediction interval for the first forecast using  
+y±1.96s where s is the standard deviation of the residuals. 
+Compare your interval with the interval produced by R.
 
 
 
 
 
+## Problem 7: HA 7.3
 
-## Problem 7
 
-
+Modify your function from the previous exercise to return the sum of squared errors rather than the forecast of the next observation. Then use the optim() function to find the optimal values of  
+α and ℓ0. Do you get the same values as the ses() function?
 
 
 
