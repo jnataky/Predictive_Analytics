@@ -1,0 +1,132 @@
+---
+title: "Data 624: Predictive Analytics - Assignment 1"
+author: "Dhairav Chhatbar"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r, message=FALSE, warning=FALSE}
+library(fpp2)
+library(readxl)
+library(httr)
+library(seasonal)
+```
+
+
+### 2.1
+
+Use the help function to explore what the series gold, woolyrnq and gas represent.
+
+**a) Use autoplot() to plot each of these in separate plots.**  
+
+Daily morning gold prices in US dollars. 1 January 1985 – 31 March 1989
+```{r}
+autoplot(gold)
+```
+Quarterly production of woollen yarn in Australia: tonnes. Mar 1965 – Sep 1994.
+```{r}
+autoplot(woolyrnq)
+```
+
+Australian monthly gas production: 1956–1995.
+```{r}
+autoplot(gas)
+```
+
+
+b) What is the frequency of each series? Hint: apply the frequency() function.
+```{r}
+frequency(gold)
+frequency(woolyrnq)
+frequency(gas)
+```
+
+
+c) Use which.max() to spot the outlier in the gold series. Which observation was it?
+```{r}
+which.max(gold)
+which.max(woolyrnq)
+which.max(gas)
+```
+
+### 2.3
+  
+Download some monthly Australian retail data from the book website. These represent retail sales in various categories for different Australian states, and are stored in a MS-Excel file.
+```{r, message=FALSE, warning=FALSE}
+url<-"https://otexts.com/fpp2/extrafiles/retail.xlsx"
+temp.file <- paste(tempfile(),".xlsx",sep = "")
+download.file(url, temp.file, mode = "wb")
+
+retaildata <- read_excel(temp.file, skip = 1)
+```
+
+b) Select one of the time series as follows (but replace the column name with your own chosen column)
+```{r}
+myts <- ts(retaildata[,"A3349873A"], frequency=12, start=c(1982,4))
+```
+
+**c) Explore your chosen retail time series using the following functions: autoplot(), ggseasonplot(), ggsubseriesplot(), gglagplot(), ggAcf(). Can you spot any seasonality, cyclicity and trend? What do you learn about the series?**  
+There appears to be seasonality in the data as can be seen by the periodic spike in sales, and generally an increasing trend which dips a bit around 2000 and 2010. November and December are the highest sales points on the years. 
+```{r}
+autoplot(myts)
+ggseasonplot(myts)
+ggsubseriesplot(myts)
+gglagplot(myts)
+ggAcf(myts)
+```
+
+
+
+
+
+### 6.2
+
+The plastics data set consists of the monthly sales (in thousands) of product A for a plastics manufacturer for five years.
+```{r}
+plastics
+```
+
+
+**a) Plot the time series of sales of product A. Can you identify seasonal fluctuations and/or a trend-cycle?**
+From the below plot we can see that spike around mid year and return to a low point at the end of the year where the seasonality beings again for the next year. The trend seems to be additive and increasing. 
+```{r}
+autoplot(plastics)
+```
+
+**b) Use a classical multiplicative decomposition to calculate the trend-cycle and seasonal indices.**
+```{r}
+pls <- plastics %>% decompose(type = "multiplicative")
+autoplot(pls) + labs(x="Year", y="Sales", title="Decomposition of Plastic Sales")
+
+```
+
+
+**c) Do the results support the graphical interpretation from part a?**  
+The trend and seasonality do hold from part a. 
+
+**d) Compute and plot the seasonally adjusted data.**
+```{r}
+autoplot(pls, series="Data") + autolayer(seasadj(pls), series="Seasonally Adjusted")
+```
+
+**e) Change one observation to be an outlier (e.g., add 500 to one observation), and recompute the seasonally adjusted data. What is the effect of the outlier?**  
+The outlier causes a spike in the time series, but not the overall trend. If we adjust the for seasonality then the spike can be seen in the trend. 
+```{r}
+plastics2 <- plastics
+plastics2[30] <- plastics2[30] + 500
+pls2 <- plastics2 %>% decompose(type = "multiplicative")
+autoplot(pls2, series="Data") + autolayer(seasadj(pls2), series="Seasonally Adjusted")
+
+```
+
+**f) Does it make any difference if the outlier is near the end rather than in the middle of the time series?**  
+There is no difference between the the spike added in the middle of the series or the end, the behavior is still the same. 
+```{r}
+plastics3 <- plastics
+plastics3[55] <- plastics3[55] + 500
+pls3 <- plastics3 %>% decompose(type = "multiplicative")
+autoplot(pls3, series="Data") + autolayer(seasadj(pls3), series="Seasonally Adjusted")
+
+```
+
