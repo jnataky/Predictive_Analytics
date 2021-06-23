@@ -1,11 +1,22 @@
 ---
-title: "DATA 624 Predictive Analytics - Project 1"
-author: "Dhairav Chhatbar"
-date: "6/22/2021"
-output: html_document
+title: 'Predictive Analysis Project1 : Forecasting'
+author: Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav
+  Chhatbar
+date: "6/6/2021"
+output:
+  word_document: default
+  html_document: default
 ---
 
-```{r, message=FALSE}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Libraries
+```{r, warning = FALSE, message=FALSE}
+library(dplyr)
+library(forecast)
 library(readxl)
 library(skimr)
 library(tidyr)
@@ -16,44 +27,91 @@ library(urca)
 library(forecast)
 ```
 
+## Data Exploration & Preparation
 
-```{r, message=FALSE}
-url<-"https://github.com/dhairavc/DATA624-Predective-Analytics/raw/main/Data%20Set%20for%20Class.xls"
-temp.file <- paste(tempfile(),".xls",sep = "")
-download.file(url, temp.file, mode = "wb")
+### The data
 
-dataset <- read_excel(temp.file, sheet = 1)
+Read the excel file
+```{r}
+
+df <- readxl::read_excel("Data_Set_for_Class.xls")
+
 ```
 
 
+Convert the series index to date
 ```{r}
-S01 <- dataset %>% filter(group == "S01") %>% select(SeriesInd, group, Var01, Var02)
-S01<- S01 %>% mutate(SeriesInd = as.Date(SeriesInd, origin = "1900-01-01"))
-S01
-```
+df <- df %>%
+  mutate(SeriesInd = as.Date(SeriesInd, origin="1900-01-01"))
 
+head(df)
 
-
-## Var01
-```{r}
-var01_ts <- ts(S01$Var01)
-autoplot(var01_ts) 
-```
-```{r}
-var01_ts %>% seas(x11="") -> fit
-autoplot(fit)
 ```
 
 ```{r}
-var01_ts %>% ur.kpss() %>% summary()
-var01_ts %>% diff() %>% ur.kpss() %>% summary()
-ndiffs(var01_ts)
+df %>%
+  group_by(group) %>%
+  summarise(var1_NAsum = sum(is.na(Var01)),
+            var2_NAsum = sum(is.na(Var02)),
+            var3_NAsum = sum(is.na(Var03)),
+            var5_NAsum = sum(is.na(Var05)),
+            var7_NAsum = sum(is.na(Var07)))
 ```
 
-## Var02
+Missing data is distributed within the same observations for the most part.  Group has negligable effect on missing values.  
+There are about 140 missing observations per group which are the number to forecast.
+
+### Time series
+
+Separating data by group to make different time series
+
 ```{r}
-var02_ts <- ts(S01$Var02)
-autoplot(var02_ts) 
+s01 <- subset(df[,c("group","Var01","Var02")], group == "S01")
+s01$group <- NULL
+s01 <- ts(s01)
+
+s02 <- subset(df[,c("group","Var02","Var03")], group == "S02")
+s02$group <- NULL
+s02 <- ts(s02)
+
+s03 <- subset(df[,c("group","Var05","Var07")], group == "S03")
+s03$group <- NULL
+s03 <- ts(s03)
+
+s04 <- subset(df[,c("group","Var01","Var02")], group == "S04")
+s04$group <- NULL
+s04 <- ts(s04)
+
+s05 <- subset(df[,c("group","Var02","Var03")], group == "S05")
+s05$group <- NULL
+s05 <- ts(s05)
+
+s06 <- subset(df[,c("group","Var05","Var07")], group == "S06")
+s06$group <- NULL
+s06 <- ts(s06)
+
+series <- list(s01, s02, s03, s04, s05, s06)
 
 ```
 
+
+### Visualization
+
+Autoplot each group with its assigned variables...
+
+```{r warning=FALSE}
+
+autoplot(series[[1]][,1], main =  "s01, var 1")
+autoplot(series[[1]][,2], main =  "s01, var 2")
+autoplot(series[[2]][,1], main =  "s02, var 2")
+autoplot(series[[2]][,2], main =  "s02, var 3")
+autoplot(series[[3]][,1], main =  "s03, var 5")
+autoplot(series[[3]][,2], main =  "s03, var 7")
+autoplot(series[[4]][,1], main =  "s04, var 1")
+autoplot(series[[4]][,2], main =  "s04, var 2")
+autoplot(series[[5]][,1], main =  "s05, var 2")
+autoplot(series[[5]][,2], main =  "s05, var 3")
+autoplot(series[[6]][,1], main =  "s06, var 5")
+autoplot(series[[6]][,2], main =  "s06, var 7")
+
+```
