@@ -1,16 +1,59 @@
 ---
-title: 'Project1 : Forecasting'
-author: Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav
-  Chhatbar
-date: "6/6/2021"
-output:
-  word_document: default
-  html_document: default
+title: "DATA 624 Predictive Analytics - Project 1"
+author: "Dhairav Chhatbar"
+date: "6/22/2021"
+output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r, message=FALSE}
+library(readxl)
+library(skimr)
+library(tidyr)
+library(dplyr)
+library(seasonal)
+library(ggfortify)
+library(urca)
+library(forecast)
 ```
 
 
-## Libraries
+```{r, message=FALSE}
+url<-"https://github.com/dhairavc/DATA624-Predective-Analytics/raw/main/Data%20Set%20for%20Class.xls"
+temp.file <- paste(tempfile(),".xls",sep = "")
+download.file(url, temp.file, mode = "wb")
+
+dataset <- read_excel(temp.file, sheet = 1)
+```
+
+
+```{r}
+S01 <- dataset %>% filter(group == "S01") %>% select(SeriesInd, group, Var01, Var02)
+S01<- S01 %>% mutate(SeriesInd = as.Date(SeriesInd, origin = "1900-01-01"))
+S01
+```
+
+
+
+## Var01
+```{r}
+var01_ts <- ts(S01$Var01)
+autoplot(var01_ts) 
+```
+```{r}
+var01_ts %>% seas(x11="") -> fit
+autoplot(fit)
+```
+
+```{r}
+var01_ts %>% ur.kpss() %>% summary()
+var01_ts %>% diff() %>% ur.kpss() %>% summary()
+ndiffs(var01_ts)
+```
+
+## Var02
+```{r}
+var02_ts <- ts(S01$Var02)
+autoplot(var02_ts) 
+
+```
+
