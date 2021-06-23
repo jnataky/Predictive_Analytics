@@ -1,8 +1,11 @@
 ---
-title: "Predictive Analysis: First Half Semester Homework"
-author: "Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav Chhatbar"
-date: "6/6/2021"  
-output: html_document
+title: 'Predictive Analysis: First Half Semester Homework'
+author: Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav
+  Chhatbar
+date: "6/6/2021"
+output:
+  word_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -12,9 +15,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Libraries
 
+Load all the necessary packages.
+
 ```{r warning=FALSE, message=FALSE}
 
 library(fpp2)
+library(seasonal)
+library(mlbench)
+library(e1071)
+library(corrplot)
+library(caret)
+library(tidyverse)
+library(fma)
+library(fpp)
 
 ```
 
@@ -143,7 +156,6 @@ WE are going to use the column "A3349398A"
 myts <- ts(retaildata[,"A3349398A"],
   frequency=12, start=c(1982,4))
 
-
 ```
 
 
@@ -251,8 +263,6 @@ seasonally adjusted data
 
 ```{r}
 
-library(seasonal)
-
 plastics %>% decompose(type="multiplicative") -> fit
 
 autoplot(plastics, series = "Data") +
@@ -279,7 +289,6 @@ new_plastics[50]
 Recompute seasonally adjusted data:
 
 ```{r}
-
 
 new_plastics %>% decompose(type="multiplicative") -> fit
 
@@ -331,16 +340,8 @@ to glass identification. The data consist of 214 glass samples labeled as one
 of seven class categories. There are nine predictors, including the refractive
 index and percentages of eight elements: Na, Mg, Al, Si, K, Ca, Ba, and Fe
 
-### Libraries
 
-```{r, message=FALSE, warning=FALSE}
-
-library(mlbench)
-
-```
-
-
-### The data
+**The data**
 
 ```{r}
 data(Glass)
@@ -352,9 +353,7 @@ str(df)
 
 ```
 
-### a.
-
-Using visualizations, explore the predictor variables to understand their
+a. Using visualizations, explore the predictor variables to understand their
 distributions as well as the relationships between predictors.
 
 We are going to plot histogram to understand the distributions. The histogram
@@ -366,7 +365,6 @@ First, let plot histograms of each predictor:
 
 
 ```{r}
-library(tidyverse)
 
 df %>%
   gather(key, value, -c(Type)) %>%
@@ -380,8 +378,6 @@ df %>%
 Now, we are going to use corrplot to plot the correlation between predictors.
 
 ```{r}
-library(corrplot)
-
 # Drop column Type to remain with only the 9 predictors
 
 df <- subset(df, select = -c (Type))
@@ -391,32 +387,28 @@ head(df)
 ```
 
 Let calculate the correlation first
+
 ```{r}
 
 correlations <- round(cor(df), 2)
 correlations
 ```
 
-Now, let plot it:
+Now, let plot the correlation
 
 ```{r}
 
 corrplot(correlations)
-
 ```
 
 
-
-
-### b.
-
-Do there appear to be any outliers in the data? Are any predictors skewed?
+b. Do there appear to be any outliers in the data? Are any predictors skewed?
 
 Let plot boxplot to visualize the outliers
 
 ```{r}
 
-#boxplot(df)
+# boxplot(df)
 
 df %>%
   gather(key, value) %>%
@@ -452,9 +444,7 @@ From the skewness values, we can say that except Na which is a bit close to norm
 all the other predictors are skewed with Si being the least skewed.
 
 
-### c.
-
-Are there any relevant transformations of one or more predictors that
+c. Are there any relevant transformations of one or more predictors that
 might improve the classification model?
 
 BoxCox would be a good transformation, and we can also do principle components
@@ -464,6 +454,7 @@ That's said, we are going to do BoxCox transformation.
 As BoxCox can only be done for non null positive values, we will first add a 
 very small values to predictors containing zeros prior applying the 
 transformation.
+
 
 ```{r}
 
@@ -511,9 +502,7 @@ str(df)
 
 ```
 
-### a.
-
-Investigate the frequency distributions for the categorical predictors. Are
+a. Investigate the frequency distributions for the categorical predictors. Are
 any of the distributions degenerate in the ways discussed earlier in this
 chapter?
 
@@ -532,15 +521,13 @@ df_nz <- colnames(df)[df_var]
 df_nz
 ```
 
-
-### b.
-
-Roughly 18 % of the data are missing. Are there particular predictors that
+b. Roughly 18 % of the data are missing. Are there particular predictors that
 are more likely to be missing? Is the pattern of missing data related to
 the classes?
 
 First, we are going to identify first the number of missing in each variable
 and arrange them in descending order of number of missing values
+
 
 ```{r}
 
@@ -548,8 +535,8 @@ rev(sort(colSums(sapply(df, is.na))))
 
 ```
 
-
 Then displaying all the levels we have in "Class" feature
+
 
 ```{r}
 
@@ -571,10 +558,7 @@ table(df[, c(1, 34    )])
 From the able above, we can see that the pattern of missing data related to
 the classes.
 
-
-### c. 
-
-Develop a strategy for handling missing data, either by eliminating
+c. Develop a strategy for handling missing data, either by eliminating
 predictors or imputation.
 
 
@@ -595,9 +579,6 @@ sum(is.na(df_cleaned))
 ```
 
 
-
-
-
 ## Problem 6: HA 7.1
 
 Consider the pigs series — the number of pigs slaughtered in Victoria each month.
@@ -605,15 +586,90 @@ Consider the pigs series — the number of pigs slaughtered in Victoria each mon
 a. Use the ses() function in R to find the optimal values of  
 α and ℓ0, and generate forecasts for the next four months.
 
+
+```{r}
+pigs_ses <- ses(pigs, h = 4, initial = "optimal")
+
+summary(pigs_ses)
+
+plot(pigs_ses)
+
+
+```
+
+This finds the optimal values of alpha and ℓ0 as 0.2971 and 77260 respectively.
+
+
 b. Compute a 95% prediction interval for the first forecast using  
 y±1.96s where s is the standard deviation of the residuals. 
 Compare your interval with the interval produced by R.
 
 
 
+```{r}
+pigs_resd <- sd(pigs_ses$residuals) 
+
+upper = pigs_ses$mean[1] + pigs_resd*1.96
+lower = pigs_ses$mean[1] - pigs_resd*1.96
+
+print(paste("95% CI: ", lower , "  ---  ", upper))
 
 
-## Problem 7: HA 7.3
+```
+
+My 95% interval is above, the mean of R's is below
+
+```{r}
+print(paste("lower : ", mean(pigs_ses$lower[1,2])))
+print(paste("upper : ", mean(pigs_ses$upper[1,2])))
+```
+
+They are very similar
+
+
+
+## Problem 7: HA 7.2
+
+Write your own function to implement simple exponential smoothing. The function should take arguments y (the time series), alpha (the smoothing parameter α) and level (the initial level ℓ0). It should return the forecast of the next observation in the series. Does it give the same forecast as ses()?
+
+
+
+```{r}
+
+custom_ses <- function(y, alpha, l0) {
+  y =  rev(y) #reverses y direction
+ 
+  sum = ((1-alpha)^length(y))*l0 
+  j = 0
+  term = y[1]
+  while(j < (length(y)-1)) {
+      
+    x = (alpha*(1-alpha)^j)*y[j+1]  
+    
+    sum = sum + x
+    
+    
+    j = j + 1
+  
+  }
+  
+  return(sum)
+  
+}
+
+
+custom_ses(ts(seq(1,10,1)), 0.80, 10)
+```
+
+```{r}
+ses(ts(seq(1,10,1)), h = 1, alpha = 0.80, lambda = 10)
+```
+
+
+Almost gets it, but it's a bit low.
+
+
+## Problem 8: HA 7.3
 
 
 Modify your function from the previous exercise to return the sum of squared errors rather than the forecast of the next observation. Then use the optim() function to find the optimal values of  
@@ -622,30 +678,404 @@ Modify your function from the previous exercise to return the sum of squared err
 
 
 
-## Problem 8
+
+## Problem 9: HA 8.1
+
+
+Figure \@ref(fig:wnacfplus) shows the ACFs for 36 random numbers, 360 random numbers and 1,000 random numbers.
+
+
+a. Explain the differences among these figures. Do they all indicate that the data are white noise?
+
+```{r wnacfplus, fig.asp=0.4, echo=FALSE, fig.cap="Left: ACF for a white noise series of 36 numbers. Middle: ACF for a white noise series of 360 numbers. Right: ACF for a white noise series of 1,000 numbers."}
+    x1 <- rnorm(36)
+    x2 <- rnorm(360)
+    x3 <- rnorm(1000)
+    p1 <- ggAcf(x1, ylim=c(-1,1), main="", lag.max = 20)
+    p2 <- ggAcf(x2, ylim=c(-1,1), main="", lag.max = 20)
+    p3 <- ggAcf(x3, ylim=c(-1,1), main="", lag.max = 20)
+    gridExtra::grid.arrange(p1,p2,p3,nrow=1)
+    
+```
+
+
+X1: Has the fewest observatons and the highest variance
+
+X2: has the median amount of variations and variance
+
+X3: has the most observations and lowest variance
+
+They do indicate white noise, but with different variances.
+
+
+b. Why are the critical values at different distances from the mean of zero? Why are the autocorrelations different in each figure when they each refer to white noise?
+
+
+The critical values are calculated with respect to the inverse square root of the sample size; the sample size is different for each.  
+
+The autocorrelations are different for each due to differences in variance.
+
+
+## Problem 10: HA 8.2
+
+
+A classic example of a non-stationary series is the daily closing IBM stock price series (data set `ibmclose`). Use R to plot the daily closing prices for IBM stock and the ACF and PACF. Explain how each plot shows that the series is non-stationary and should be differenced.
+
+
+
+```{r}
+library(fma) #Has the ibmclose dataset
+
+plot(ibmclose)
+
+```
+
+above is a plot of daiily closing prices (dollars) over about a year (in days).  It's self evident that the series is non stationary.
+
+```{r}
+acf(ibmclose, lag.max = 368)
+```
+
+The ACF plot above shows that there were consistant changes over time to the data.  A stationary series would look like a random walk around the middle, without clear pattern.
+
+```{r}
+pacf(ibmclose, lag.max = 368)
+```
+
+Above we observe a large spike at the first lag (near 1.0) followed by insignificant, random seeming correlations.  This indicates that the series is autoregressive; values are correlated to one-another. 
+
+
+
+
+## Problem 11: HA 8.6
+
+
+Use R to simulate and plot some data from simple ARIMA models.
+
+
+a. Use the following R code to generate data from an AR(1) model with $\phi_{1} = 0.6$ and $\sigma^2=1$. The process starts with $y_1=0$.
+    
+
+```{r}
+        y <- ts(numeric(100))
+        e <- rnorm(100)
+        for(i in 2:100)
+           y[i] <- 0.6*y[i-1] + e[i]
+```
+
+
+
+```{r}
+y <- ts(numeric(100))
+e <- rnorm(100)
+for(i in 2:100)
+  y[i] <- 0.6*y[i-1] + e[i]
+```
+
+
+b. Produce a time plot for the series. How does the plot change as you change $\phi_1$?
+
+
+We'll plot the time series above, along with other values of ϕ1
+
+```{r}
+par(mfrow=c(2,2))
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0.2
+for(i in 2:100)
+  y[i] <- k*y[i-1] + e[i]
+
+plot(y, main = k)
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0.4
+for(i in 2:100)
+  y[i] <- k*y[i-1] + e[i]
+
+plot(y, main = k)
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0.6
+for(i in 2:100)
+  y[i] <- k*y[i-1] + e[i]
+
+plot(y, main = k)
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0.8
+for(i in 2:100)
+  y[i] <- k*y[i-1] + e[i]
+
+plot(y, main = k)
+```
+
+
+
+It would seem that the value at one observation becomes more dependent on the value of the last observation as ϕ1 increases.  In other words, the data is more autocorrelated with higher ϕ1 values.
+
+
+c. Write your own code to generate data from an MA(1) model with $\theta_{1}  =  0.6$ and $\sigma^2=1$.
+
+
+Will be very similar to the AR data generator, but will consider the last value of 'e' instead of 'y'
+
+```{r}
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0.1
+
+for (i in 2:100) {
+  y[i] <- k*e[i-1] + e[i]
+}
+
+print(head(y))
+```
+
+
+d. Produce a time plot for the series. How does the plot change as you change $\theta_1$?
+
+
+Copy pasted from part b with minor changes
+
+```{r}
+par(mfrow=c(2,3))
+
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- -0.9
+
+for (i in 2:100) {
+  y[i] <- k*e[i-1] + e[i]
+}
+
+plot(y, main = k)
+
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- -0.4
+
+for (i in 2:100) {
+  y[i] <- k*e[i-1] + e[i]
+}
+
+plot(y, main = k)
+
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0
+
+for (i in 2:100) {
+  y[i] <- k*e[i-1] + e[i]
+}
+
+plot(y, main = k)
+
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0.4
+
+for (i in 2:100) {
+  y[i] <- k*e[i-1] + e[i]
+}
+
+plot(y, main = k)
+
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0.9
+
+for (i in 2:100) {
+  y[i] <- k*e[i-1] + e[i]
+}
+
+plot(y, main = k)
+```
+
+They seem to become more of a random walk as θ1 increases from -1 to 1.  
+
+
+e. Generate data from an ARMA(1,1) model with $\phi_{1} = 0.6$, $\theta_{1}  = 0.6$ and $\sigma^2=1$.
+
+
+Gonna copy paste it again with a slight change
+
+```{r}
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0.6
+k2 <- 0.6
+
+for (i in 2:100) {
+  y[i] <- k*y[i-1] + k2*e[i-1] + e[i]
+}
+
+print(head(y))
+```
+
+f. Generate data from an AR(2) model with $\phi_{1} =-0.8$, $\phi_{2} = 0.3$ and $\sigma^2=1$. (Note that these parameters will give a non-stationary series.)
+
+
+Same thing as AR(1) but with an extra term
+
+```{r}
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- -0.8
+k2 <- 0.3
+
+for(i in 3:100)
+  y[i] <- k*y[i-1] + k2*y[i-2] + e[i]
+
+print(head(y))
+```
+
+
+g. Graph the latter two series and compare them.
+
+
+```{r}
+par(mfrow=c(1,2))
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- 0.6
+k2 <- 0.6
+
+for (i in 2:100) {
+  y[i] <- k*y[i-1] + k2*e[i-1] + e[i]
+}
+
+plot(y, main = "ARMA")
+
+y <- ts(numeric(100))
+e <- rnorm(100)
+k <- -0.8
+k2 <- 0.3
+
+for(i in 3:100)
+  y[i] <- k*y[i-1] + k2*y[i-2] + e[i]
+
+plot(y, main = "AR2")
+
+
+```
+
+The ARMA model looks much more stable, but also somewhat autoregressive.  The AR2 model has a magnitude that increases ove time.
+
+
+
+## Problem 12: HA 8.8
+
+Consider austa, the total international visitors to Australia (in millions) for the period 1980-2015.
+
+
+a. Use auto.arima() to find an appropriate ARIMA model. What model was selected. Check that the residuals look like white noise. Plot forecasts for the next 10 periods.
+
+
+```{r}
+
+fit <- auto.arima(austa)
+
+summary(fit)
+```
+
+
+Above is the model that was selected.  It selected what is essentially a random walk model with drift.  Below are a plain residuals plot and an acf plot of the residuals along with a histogram of the residuals.
+
+```{r}
+checkresiduals(fit$residuals)
+```
+
+The residuals look normally distributed and well within the critical bounds.  The model works well.
+
+Below is a forcast of the next 10 values
+ 
+```{r}
+autoplot(forecast(fit))
+```
+
+looks about right.
+
+
+b. Plot forecasts from an ARIMA(0,1,1) model with no drift and compare these to part a. Remove the MA term and plot again.
+
+
+```{r}
+fit <- Arima(austa, order = c(0, 1, 1),include.drift = 0)
+
+autoplot(forecast(fit))
+```
+
+The mean of the predictions are the same with this whereas the model with drift has a mean that trends upwards and a tighter range of predictions.  This model is essentially simple exponential smoothing, while the previous one was a random walk with drift.
+
+Below is a plot of forcasts without the MA term (random walk with no drift)
+
+```{r}
+fit <- Arima(austa, order = c(0, 1, 0),include.drift = 0)
+
+autoplot(forecast(fit))
+```
+
+Yields a tighter range of predictions
+
+
+c. Plot forecasts from an ARIMA(2,1,3) model with drift. Remove the constant and see what happens.
+
+```{r}
+fit <- Arima(austa, order = c(2, 1, 3),include.drift = 1, include.constant = 0)
+
+autoplot(forecast(fit))
+```
+
+The forcasts in this model expand at an increasing rate compared with the previous models, which expanded but at a decreasing rate.
+
+
+
+d. Plot forecasts from an ARIMA(0,0,1) model with a constant. Remove the MA term and plot again.
+
+
+```{r}
+fit <- Arima(austa, order = c(0, 0, 1),include.drift = 1, include.constant = 1)
+
+autoplot(forecast(fit))
+```
+
+This model produces a narrow band of forcasts of increasing value (drift is included); this is a moving average model.  Below the MA term is removed.
+
+```{r}
+fit <- Arima(austa, order = c(0, 0, 0),include.drift = 1, include.constant = 1)
+
+autoplot(forecast(fit))
+```
+
+Now it's a white noise model with drift.
+
+
+
+e. Plot forecasts from an ARIMA(0,2,1) model with no constant.
+
+
+```{r}
+fit <- Arima(austa, order = c(0, 2, 1),include.drift = 1, include.constant = 0)
+
+autoplot(forecast(fit))
+```
+
+This is linear exponential smoothing.  It produces a widening range of forcasts.  The widening appears to occur at a linear rate for the most part.
 
 
 
 
 
 
-
-## Problem 9
-
-
-
-
-
-
-
-## Problem 10
-
-
-
-
-
-
-
-
-## Problem 11
 
