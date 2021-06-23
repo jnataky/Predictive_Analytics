@@ -1,0 +1,14 @@
+---
+title: 'Project1 : Forecasting'
+author: Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav
+  Chhatbar
+date: "6/6/2021"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
