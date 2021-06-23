@@ -25,8 +25,9 @@ library(seasonal)
 library(ggfortify)
 library(urca)
 library(forecast)
+
 library(aTSA)
-```
+
 
 ## Data Exploration & Preparation
 
@@ -84,7 +85,10 @@ day_summary %>% ggplot( aes(fill=group, y=Days, x=Day)) + geom_bar(position="dod
   labs(title="Day Distribution")
 ```
 
+
 Nearly uniform but has consistant slight differences across variables
+
+
 
 ### Time series
 
@@ -93,6 +97,7 @@ Separating data by group to make different time series
 ```{r, warning=FALSE}
 S01_Var01 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 365)
 S01_Var01 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S01_Var01)
 Pacf(S01_Var01, lag.max = 10) 
 
@@ -115,10 +120,15 @@ suggestive of autoregressive process because the PACF becomes insignificant much
 
 Both the ACF and PACF of the differenced series start positive, and become insignificant after lag 2.  Could be two MA and two AR terms; maybe more AR terms because the PACF starts positive.
 
+
+
+
+
 #### S01 Var02
 ```{r, warning=FALSE}
 S01_Var02 <- ts(df %>% filter(group == "S01", Var=="Var02") %>% select(Value), frequency = 365)
 S01_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S01_Var02)
 pacf(S01_Var02)
 
@@ -143,10 +153,14 @@ suggestive of autoregressive process
 
 The ACF of the differenced series the ACF of the differenced series cuts off more quickly than the PACF, indicating primarily AR.  The ACF cuts off past lag 2, and the PACF takes a while.  Could try several AR terms and fewer MA terms
 
+
+
+
 #### S02 Var02
 ```{r, warning=FALSE}
 S02_Var02 <- ts(df %>% filter(group == "S02", Var=="Var02") %>% select(Value), frequency = 365)
 S02_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S02_Var02)
 Pacf(S02_Var02)
 
@@ -169,10 +183,12 @@ suggestive of autoregressive process
 
 The ACF of the differenced series the ACF of the differenced series cuts off more quickly than the PACF, indicating primarily AR.  The ACF cuts off past lag 2, and the PACF takes a while.  Could try several AR terms and fewer MA terms
 
+
 #### S02 Var03
 ```{r, warning=FALSE}
 S02_Var03 <- ts(df %>% filter(group == "S02", Var=="Var03") %>% select(Value), frequency = 365)
 S02_Var03 %>% decompose(type="multiplicative") %>% autoplot()
+
 
 Acf(S02_Var03)
 Pacf(S02_Var03, lag.max = 10)
@@ -196,10 +212,12 @@ suggestive of autoregressive process
 
 ACF of the differenced series cuts off from a negative value very quickly, indicating AR process.  It takes a while for the PACF of the differenced series to drop off, so a higher order AR process.  ACF is negative, so maybe an MA term would work well in addition.
 
+
 #### S03 Var05
 ```{r, warning=FALSE}
 S03_Var05 <- ts(df %>% filter(group == "S03", Var=="Var05") %>% select(Value), frequency = 365)
 S03_Var05 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S03_Var05)
 Pacf(S03_Var05, lag.max = 10)
 
@@ -222,10 +240,12 @@ suggestive of autoregressive process
 
 Both PACF and ACF of the differenced series cut off after 1 lag.  Maybe one MA and AR term
 
+
 #### S03 Var07
 ```{r, warning=FALSE}
 S03_Var07 <- ts(df %>% filter(group == "S03", Var=="Var07") %>% select(Value), frequency = 365)
 S03_Var07 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S03_Var07)
 Pacf(S03_Var07, lag.max = 10)
 
@@ -247,10 +267,12 @@ suggestive of autoregressive process
 
 No significant lags in either ACF of PACF of the differenced series.  This one has no AR or MA terms
 
+
 #### S04 Var01
 ```{r, warning=FALSE}
 S04_Var01 <- ts(df %>% filter(group == "S04", Var=="Var01") %>% select(Value), frequency = 365)
 S04_Var01 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S04_Var01)
 Pacf(S04_Var01, lag.max = 10)
 
@@ -273,10 +295,12 @@ suggestive of autoregressive process
 No significant lags in either ACF of PACF of the differenced series.  This one has no AR or MA terms
 
 
+
 #### S04 Var02
 ```{r, warning=FALSE}
 S04_Var02 <- ts(df %>% filter(group == "S04", Var=="Var02") %>% select(Value), frequency = 365)
 S04_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S04_Var02)
 Pacf(S04_Var02, lag.max = 10)
 
@@ -299,10 +323,12 @@ suggestive of autoregressive process, but less so than others
 
 A high number of significant lags in the PACF of the differenced series, and a few significant lags in the ACF.  Probably a higher number of AR terms, maybe a couple MA terms
 
+
 #### S05 Var02
 ```{r, warning=FALSE}
 S05_Var02 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 365)
 S05_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S05_Var02)
 Pacf(S05_Var02)
 
@@ -324,10 +350,12 @@ suggestive of autoregressive process
 
 Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR because PACF starts positive
 
+
 #### S05 Var03
 ```{r, warning=FALSE}
 S05_Var03 <- ts(df %>% filter(group == "S05", Var=="Var03") %>% select(Value), frequency = 365)
 S05_Var03 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S05_Var03)
 Pacf(S05_Var03)
 
@@ -349,10 +377,12 @@ suggestive of autoregressive process
 Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR because PACF starts positive
 
 
+
 #### S06 Var05
 ```{r, warning=FALSE}
 S06_Var05 <- ts(df %>% filter(group == "S06", Var=="Var05") %>% select(Value), frequency = 365)
 S06_Var05 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S06_Var05)
 Pacf(S06_Var05)
 
@@ -373,10 +403,12 @@ suggestive of autoregressive process
 
 The ACF of the differenced series cut off after 1 lag, while the PACF trailed on for a while.  Could be just one MA term, maybey 2
 
+
 #### S06 Var07
 ```{r, warning=FALSE}
 S06_Var07 <- ts(df %>% filter(group == "S06", Var=="Var07") %>% select(Value), frequency = 365)
 S06_Var07 %>% decompose(type="multiplicative") %>% autoplot()
+
 Acf(S06_Var07)
 Pacf(S06_Var07)
 
