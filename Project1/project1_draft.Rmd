@@ -1,11 +1,11 @@
 ---
-title: 'Project1 : Forecasting'
+title: 'Predictive Analysis Project1 : Forecasting'
 author: Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav
   Chhatbar
 date: "6/6/2021"
 output:
-  word_document: default
   html_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -14,22 +14,46 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ## Libraries
-```{r}
+```{r, warning = FALSE, message=FALSE}
 library(dplyr)
 library(forecast)
+library(readxl)
+library(skimr)
+library(tidyr)
+library(dplyr)
+library(seasonal)
+library(ggfortify)
+library(urca)
+library(forecast)
+library(aTSA)
 ```
 
-### Your data is a de-identified Excel spreadsheet.  Your assignment is to perform the appropriate analysis to forecast several series for 140 periods.  You will have 1622 periods for your analysis.
+## Data Exploration & Preparation
 
-```{r}
-df <- read.csv("https://raw.githubusercontent.com/davidblumenstiel/data/master/Data614Project1Dataset.csv")
-colnames(df)[1] <- "SeriesIndex"
-summary(df)
+### The data
+
+Read the excel file
+
+```{r, message=FALSE, warning=FALSE}
+url<-"https://github.com/jnataky/Predictive_Analytics/raw/main/Project1/Data_Set_for_Class.xls"
+temp.file <- paste(tempfile(),".xls",sep = "")
+download.file(url, temp.file, mode = "wb")
+
+dataset <- read_excel(temp.file, sheet = 1)
 
 ```
 
+
+
+Convert the series index to date
 ```{r}
-df %>% 
+df <- dataset %>%
+  mutate(SeriesInd = as.Date(SeriesInd, origin="1900-01-01"))
+head(df)
+```
+
+```{r}
+df %>%
   group_by(group) %>%
   summarise(var1_NAsum = sum(is.na(Var01)),
             var2_NAsum = sum(is.na(Var02)),
@@ -38,53 +62,648 @@ df %>%
             var7_NAsum = sum(is.na(Var07)))
 ```
 
-Missing data is distributed within the same observations for the most part.  Group has negligable effect on missing values.  Coincidentally, there are almost 140 missing observations per group; approximately the number we are supposed to forecast.
+Missing data is distributed within the same observations for the most part.  Group has negligable effect on missing values.  
+There are about 140 missing observations per group which are the number to forecast.
+Drop NA Values
+```{r}
+df <- df %>% gather("Var", "Value", 3:7) %>% drop_na()
+```
+
+### Visulizations
+
+```{r, fig.width=15, fig.height=20}
+
+df$Day <- weekdays(df$SeriesInd)
+df %>% ggplot( aes(x=SeriesInd, y=Value, color=group))  + facet_wrap(~Var, scales = "free", ncol = 1) + geom_line() +
+  labs(title = "Var Trends by Groups") 
+```
+
+```{r, message=FALSE, warning=FALSE}
+day_summary <- df %>% select(group, Var, Day) %>% group_by(group, Var, Day) %>% summarise(Days=n()) 
+day_summary %>% ggplot( aes(fill=group, y=Days, x=Day)) + geom_bar(position="dodge", stat="identity") + facet_wrap(~Var, scales = "free", ncol = 2) + 
+  labs(title="Day Distribution")
+```
+
+Nearly uniform but has consistant slight differences across variables
+
+### Time series
+
+Separating data by group to make different time series
+#### S01 Var01
+```{r, warning=FALSE}
+S01_Var01 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 365)
+S01_Var01 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S01_Var01)
+Pacf(S01_Var01, lag.max = 10) 
+
+adf.test(S01_Var01) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S01_Var01) #Determines how many first differences are nessicary
+nsdiffs(S01_Var01) #Determines if we need seasonal differncing
+
+#Differenced acf/pacf plots
+
+Acf(diff(S01_Var01), lag.max = 10)
+Pacf(diff(S01_Var01), lag.max = 10) 
+
+
+```
+
+non-stationary; trend
+needs 1 first differencing
+
+suggestive of autoregressive process because the PACF becomes insignificant much earlier than the ACF
+
+Both the ACF and PACF of the differenced series start positive, and become insignificant after lag 2.  Could be two MA and two AR terms; maybe more AR terms because the PACF starts positive.
+
+#### S01 Var02
+```{r, warning=FALSE}
+S01_Var02 <- ts(df %>% filter(group == "S01", Var=="Var02") %>% select(Value), frequency = 365)
+S01_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S01_Var02)
+pacf(S01_Var02)
+
+adf.test(S01_Var02) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S01_Var02) #Determines how many first differences are nessicary
+nsdiffs(S01_Var02) #Determines if we need seasonal differncing
+
+#Differenced acf/pacf plots
+
+Acf(diff(S01_Var02), lag.max = 10)
+Pacf(diff(S01_Var02), lag.max = 10) 
+
+
+```
+
+stationary
+
+needs 1 first differencing
  
-Seperating data by group and making timeseries
 
-```{r}
-#There's probably a prettier way to do this 
-s01 <- subset(df[,c("group","Var01","Var02")], group == "S01")
-s01$group <- NULL 
-s01 <- ts(s01) 
+suggestive of autoregressive process
 
-s02 <- subset(df[,c("group","Var02","Var03")], group == "S02")
-s02$group <- NULL 
-s02 <- ts(s02) 
+The ACF of the differenced series the ACF of the differenced series cuts off more quickly than the PACF, indicating primarily AR.  The ACF cuts off past lag 2, and the PACF takes a while.  Could try several AR terms and fewer MA terms
 
-s03 <- subset(df[,c("group","Var05","Var07")], group == "S03")
-s03$group <- NULL 
-s03 <- ts(s03) 
+#### S02 Var02
+```{r, warning=FALSE}
+S02_Var02 <- ts(df %>% filter(group == "S02", Var=="Var02") %>% select(Value), frequency = 365)
+S02_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S02_Var02)
+Pacf(S02_Var02)
 
-s04 <- subset(df[,c("group","Var01","Var02")], group == "S04")
-s04$group <- NULL 
-s04 <- ts(s04) 
+adf.test(S02_Var02) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S02_Var02) #Determines how many first differences are nessicary
+nsdiffs(S02_Var02) #Determines if we need seasonal differncing
 
-s05 <- subset(df[,c("group","Var02","Var03")], group == "S05")
-s05$group <- NULL 
-s05 <- ts(s05) 
+#Differenced acf/pacf plots
 
-s06 <- subset(df[,c("group","Var05","Var07")], group == "S06")
-s06$group <- NULL 
-s06 <- ts(s06) 
-
-series <- list(s01, s02, s03, s04, s05, s06)
+Acf(diff(S02_Var02), lag.max = 10)
+Pacf(diff(S02_Var02), lag.max = 10) 
 
 ```
 
-```{r}
-#Could do this cleaner, but oh well
-autoplot(series[[1]][,1], main =  "s01, var 1")
-autoplot(series[[1]][,2], main =  "s01, var 2")
-autoplot(series[[2]][,1], main =  "s02, var 2")
-autoplot(series[[2]][,2], main =  "s02, var 3")
-autoplot(series[[3]][,1], main =  "s03, var 5")
-autoplot(series[[3]][,2], main =  "s03, var 7")
-autoplot(series[[4]][,1], main =  "s04, var 1")
-autoplot(series[[4]][,2], main =  "s04, var 2")
-autoplot(series[[5]][,1], main =  "s05, var 2")
-autoplot(series[[5]][,2], main =  "s05, var 3")
-autoplot(series[[6]][,1], main =  "s06, var 5")
-autoplot(series[[6]][,2], main =  "s06, var 7")
+stationary
+
+needs 1 first differencing
+ 
+suggestive of autoregressive process
+
+The ACF of the differenced series the ACF of the differenced series cuts off more quickly than the PACF, indicating primarily AR.  The ACF cuts off past lag 2, and the PACF takes a while.  Could try several AR terms and fewer MA terms
+
+#### S02 Var03
+```{r, warning=FALSE}
+S02_Var03 <- ts(df %>% filter(group == "S02", Var=="Var03") %>% select(Value), frequency = 365)
+S02_Var03 %>% decompose(type="multiplicative") %>% autoplot()
+
+Acf(S02_Var03)
+Pacf(S02_Var03, lag.max = 10)
+
+adf.test(S02_Var03) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S02_Var03) #Determines how many first differences are nessicary
+nsdiffs(S02_Var03) #Determines if we need seasonal differncing
+
+#Differenced acf/pacf plots
+
+Acf(diff(S02_Var03), lag.max = 10)
+Pacf(diff(S02_Var03), lag.max = 10) 
 
 ```
+
+Not stationary; season, maybe not trend?
+
+needs 1 first differencing
+
+suggestive of autoregressive process
+
+ACF of the differenced series cuts off from a negative value very quickly, indicating AR process.  It takes a while for the PACF of the differenced series to drop off, so a higher order AR process.  ACF is negative, so maybe an MA term would work well in addition.
+
+#### S03 Var05
+```{r, warning=FALSE}
+S03_Var05 <- ts(df %>% filter(group == "S03", Var=="Var05") %>% select(Value), frequency = 365)
+S03_Var05 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S03_Var05)
+Pacf(S03_Var05, lag.max = 10)
+
+adf.test(S03_Var05) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S03_Var05) #Determines how many first differences are nessicary
+nsdiffs(S03_Var05) #Determines if we need seasonal differncing
+
+#Differenced acf/pacf plots
+
+Acf(diff(S03_Var05), lag.max = 10)
+Pacf(diff(S03_Var05), lag.max = 10) 
+
+```
+
+non-stationary; trend and season
+
+needs 1 first differencing
+
+suggestive of autoregressive process
+
+Both PACF and ACF of the differenced series cut off after 1 lag.  Maybe one MA and AR term
+
+#### S03 Var07
+```{r, warning=FALSE}
+S03_Var07 <- ts(df %>% filter(group == "S03", Var=="Var07") %>% select(Value), frequency = 365)
+S03_Var07 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S03_Var07)
+Pacf(S03_Var07, lag.max = 10)
+
+adf.test(S03_Var07) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S03_Var07) #Determines how many first differences are nessicary
+nsdiffs(S03_Var07) #Determines if we need seasonal differncing
+
+
+Acf(diff(S03_Var07), lag.max = 10)
+Pacf(diff(S03_Var07), lag.max = 10) 
+
+```
+
+non-stationary; trend and season
+
+needs 1 first differencing
+
+suggestive of autoregressive process
+
+No significant lags in either ACF of PACF of the differenced series.  This one has no AR or MA terms
+
+#### S04 Var01
+```{r, warning=FALSE}
+S04_Var01 <- ts(df %>% filter(group == "S04", Var=="Var01") %>% select(Value), frequency = 365)
+S04_Var01 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S04_Var01)
+Pacf(S04_Var01, lag.max = 10)
+
+adf.test(S04_Var01) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S04_Var01) #Determines how many first differences are nessicary
+nsdiffs(S04_Var01) #Determines if we need seasonal differncing
+
+Acf(diff(S04_Var01), lag.max = 10)
+Pacf(diff(S04_Var01), lag.max = 10) 
+
+
+```
+
+non-stationary; trend and season
+
+needs 1 first difference
+
+suggestive of autoregressive process
+
+No significant lags in either ACF of PACF of the differenced series.  This one has no AR or MA terms
+
+
+#### S04 Var02
+```{r, warning=FALSE}
+S04_Var02 <- ts(df %>% filter(group == "S04", Var=="Var02") %>% select(Value), frequency = 365)
+S04_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S04_Var02)
+Pacf(S04_Var02, lag.max = 10)
+
+adf.test(S04_Var02) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S04_Var02) #Determines how many first differences are nessicary
+nsdiffs(S04_Var02) #Determines if we need seasonal differncing
+
+
+Acf(diff(S04_Var02), lag.max = 10)
+Pacf(diff(S04_Var02), lag.max = 10) 
+
+
+```
+
+Stationary
+
+needs 1 first difference
+
+suggestive of autoregressive process, but less so than others
+
+A high number of significant lags in the PACF of the differenced series, and a few significant lags in the ACF.  Probably a higher number of AR terms, maybe a couple MA terms
+
+#### S05 Var02
+```{r, warning=FALSE}
+S05_Var02 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 365)
+S05_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S05_Var02)
+Pacf(S05_Var02)
+
+adf.test(S05_Var02) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S05_Var02) #Determines how many first differences are nessicary
+nsdiffs(S05_Var02) #Determines if we need seasonal differncing
+
+Acf(diff(S05_Var02), lag.max = 10)
+Pacf(diff(S05_Var02), lag.max = 10) 
+
+
+```
+
+non-stationary; trend and seasonal
+
+needs 1 first difference
+
+suggestive of autoregressive process
+
+Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR because PACF starts positive
+
+#### S05 Var03
+```{r, warning=FALSE}
+S05_Var03 <- ts(df %>% filter(group == "S05", Var=="Var03") %>% select(Value), frequency = 365)
+S05_Var03 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S05_Var03)
+Pacf(S05_Var03)
+
+adf.test(S05_Var03) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S05_Var03) #Determines how many first differences are nessicary
+nsdiffs(S05_Var03) #Determines if we need seasonal differncing
+
+Acf(diff(S05_Var03), lag.max = 10)
+Pacf(diff(S05_Var03), lag.max = 10) 
+
+```
+
+non-stationary (probably); seasonal, probably trend
+
+needs 1 first difference
+
+suggestive of autoregressive process
+
+Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR because PACF starts positive
+
+
+#### S06 Var05
+```{r, warning=FALSE}
+S06_Var05 <- ts(df %>% filter(group == "S06", Var=="Var05") %>% select(Value), frequency = 365)
+S06_Var05 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S06_Var05)
+Pacf(S06_Var05)
+
+adf.test(S06_Var05) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S06_Var05) #Determines how many first differences are nessicary
+nsdiffs(S06_Var05) #Determines if we need seasonal differncing
+
+Acf(diff(S06_Var05), lag.max = 10)
+Pacf(diff(S06_Var05), lag.max = 20) 
+
+```
+
+non-stationary
+
+needs 1 first  difference
+
+suggestive of autoregressive process
+
+The ACF of the differenced series cut off after 1 lag, while the PACF trailed on for a while.  Could be just one MA term, maybey 2
+
+#### S06 Var07
+```{r, warning=FALSE}
+S06_Var07 <- ts(df %>% filter(group == "S06", Var=="Var07") %>% select(Value), frequency = 365)
+S06_Var07 %>% decompose(type="multiplicative") %>% autoplot()
+Acf(S06_Var07)
+Pacf(S06_Var07)
+
+adf.test(S06_Var07) #Unit root test.  This tests if differencing is nessiary
+ndiffs(S06_Var07) #Determines how many first differences are nessicary
+nsdiffs(S06_Var07) #Determines if we need seasonal differncing
+
+Acf(diff(S06_Var07), lag.max = 10)
+Pacf(diff(S06_Var07), lag.max = 20) 
+
+```
+
+non-stationary
+
+needs 1 first  difference
+
+suggestive of autoregressive process
+
+
+The ACF of the differenced series cut off after 1 lag, while the PACF trailed on for a while.  Could be just one MA term, maybey 2
+
+
+## Modeling
+
+This was of great help: https://www.datalytyx.com/choosing-the-right-forecast-model-for-time-series-data/
+
+Also this for helping determine the number of AR/MA terms: https://people.duke.edu/~rnau/arimrule.htm
+
+We'll try selecting ARIMA models based on our observations of the data, and by using the auto.arima() function to find one automatically.
+
+##### Some common observations:
+
+Everything seems to require differencing 1 time. 
+
+No seasonal differencing was nessicariry; likely no seasonal trends
+
+
+### S01 Var01
+
+Both the ACF and PACF of the differenced series start positive, and become insignificant after lag 2.  Could be two MA and two AR terms; maybe more AR terms because the PACF starts positive.
+
+#### Manual
+
+We'll try out ARIMA 2, 1, 1.  There is a trend, so drift should be included
+
+```{r}
+#First a little function.  Takes an arima model and does the analyses/residual-visualizations
+arima_analysis <- function(fit) {
+  print(summary(fit))
+  
+  checkresiduals(fit)
+}
+```
+
+
+```{r}
+S01_Var01.fit <- Arima(S01_Var01, order = c(2, 1, 1), include.drift = TRUE)
+
+arima_analysis(S01_Var01.fit)
+
+```
+
+The residuals have a mean of approximately 0 and are distributed normally.  However they might not vary constantly, and the acf plot indicates some autocorrelation.  The Ljung-Box test however failed to find evidence that the observed autocrorrelations did not come from white noise.  This is a valid model
+
+#### Auto ARIMA
+
+```{r}
+S01_Var01.autofit <- auto.arima(S01_Var01)
+
+arima_analysis(S01_Var01.autofit)
+
+```
+
+the auto.arima function came up with ARIMA 0, 1, 2 with drift; much heavier on moving average than the manually selected model, with no autoregressive term.
+
+The residuals have a mean of approximately 0 and are distributed normally.  However they might not vary constantly, and the acf plot indicates some autocorrelation.  The Ljung-Box test however failed to find evidence that the observed autocrorrelations did not come from white noise.  This is a valid model.
+
+Both models perform similarly, with the manual model barely edging out the automatic one with a log liklihood 0.04 higher, although the AICc for the auto model is slightly smaller.  The RMSE for the manual model was also negligably higher.  Either model works, but the reasoning behind the manual one makes more sense (should have autoregressive terms according to ACF/PACF of differenced series)
+
+
+### S01 Var02
+
+#### Manual
+
+The ACF of the differenced series the ACF of the differenced series cuts off more quickly than the PACF, indicating primarily AR.  The ACF cuts off past lag 2, and the PACF takes a while.  Could try several AR terms and fewer MA terms
+
+We'll go with ARIMA 3,1,1 with no drift
+
+```{r}
+S01_Var02.fit <- Arima(S01_Var02, order = c(3, 1, 1), include.drift = FALSE)
+
+arima_analysis(S01_Var02.fit)
+
+```
+
+
+```{r}
+S01_Var02.autofit <- auto.arima(S01_Var02)
+
+arima_analysis(S01_Var02.autofit)
+
+```
+
+### S02 Var02
+
+#### Manual
+
+The ACF of the differenced series the ACF of the differenced series cuts off more quickly than the PACF, indicating primarily AR.  The ACF cuts off past lag 2, and the PACF takes a while.  Could try several AR terms and fewer MA terms
+
+We'll go with ARIMA 3,1,1 with no drift
+
+
+```{r}
+S02_Var02.fit <- Arima(S02_Var02, order = c(3, 1, 1), include.drift = FALSE)
+
+arima_analysis(S02_Var02.fit)
+
+```
+
+
+#### Automatic
+
+```{r}
+S02_Var02.autofit <- auto.arima(S02_Var02)
+
+arima_analysis(S02_Var02.autofit)
+
+```
+
+
+### S02 Var03
+
+#### Manual
+
+ACF of the differenced series cuts off from a negative value very quickly, indicating AR process.  It takes a while for the PACF of the differenced series to drop off, so a higher order AR process.  ACF is negative, so maybe an MA term would work well in addition.
+
+We'll go with ARIMA 2, 1, 1 with drift
+
+```{r}
+S02_Var03.fit <- Arima(S02_Var03, order = c(2, 1, 1), include.drift = TRUE)
+
+arima_analysis(S02_Var03.fit)
+
+```
+
+
+
+
+#### Automatic
+
+```{r}
+S02_Var03.autofit <- auto.arima(S02_Var03)
+
+arima_analysis(S02_Var03.autofit)
+
+```
+
+
+### S03 Var05
+
+#### Manual
+
+Both PACF and ACF of the differenced series cut off after 1 lag.  Maybe one MA and AR term with no drift
+
+```{r}
+S03_Var05.fit <- Arima(S03_Var05, order = c(1, 1, 1), include.drift = FALSE)
+
+arima_analysis(S03_Var05.fit)
+
+```
+
+#### Automatic
+
+```{r}
+S03_Var05.autofit <- auto.arima(S03_Var05)
+
+arima_analysis(S03_Var05.autofit)
+
+```
+
+### S03 Var07
+
+#### Manual
+
+No significant lags in either ACF of PACF of the differenced series.  This one has no AR or MA terms
+
+```{r}
+S03_Var07.fit <- Arima(S03_Var07, order = c(0, 1, 0), include.drift = TRUE)
+
+arima_analysis(S03_Var07.fit)
+
+```
+
+#### Automatic
+
+```{r}
+S03_Var07.autofit <- auto.arima(S03_Var07)
+
+arima_analysis(S03_Var07.autofit)
+
+```
+
+### S04 Var01
+
+#### Manual
+
+No significant lags in either ACF of PACF of the differenced series.  This one has no AR or MA terms
+
+```{r}
+S04_Var01.fit <- Arima(S04_Var01, order = c(0, 1, 0), include.drift = FALSE)
+
+arima_analysis(S04_Var01.fit)
+
+```
+
+#### Automatic
+
+```{r}
+S04_Var01.autofit <- auto.arima(S04_Var01)
+
+arima_analysis(S04_Var01.autofit)
+
+```
+
+### S04 Var02
+
+#### Manual
+
+A high number of significant lags in the PACF of the differenced series, and a few significant lags in the ACF.  Probably a higher number of AR terms, maybe a couple MA terms
+
+```{r}
+S04_Var02.fit <- Arima(S04_Var02, order = c(4, 1, 2), include.drift = FALSE)
+
+arima_analysis(S04_Var02.fit)
+
+```
+
+
+
+#### Automatic
+
+```{r}
+S04_Var02.autofit <- auto.arima(S04_Var02)
+
+arima_analysis(S04_Var02.autofit)
+
+```
+
+
+
+### S05 Var02
+
+#### Manual
+
+Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR because PACF starts positive
+
+```{r}
+S05_Var02.fit <- Arima(S05_Var02, order = c(2, 1, 1), include.drift = FALSE)
+
+arima_analysis(S05_Var02.fit)
+
+```
+
+#### Automatic
+
+```{r}
+S05_Var02.autofit <- auto.arima(S05_Var02)
+
+arima_analysis(S05_Var02.autofit)
+
+```
+
+
+### S06 Var05
+
+#### Manual
+
+The ACF of the differenced series cut off after 1 lag, while the PACF trailed on for a while.  Could be just one MA term, maybey 2
+
+```{r}
+S06_Var05.fit <- Arima(S06_Var05, order = c(0, 1, 2), include.drift = FALSE)
+
+arima_analysis(S06_Var05.fit)
+
+```
+
+
+#### Automatic
+
+```{r}
+S06_Var05.autofit <- auto.arima(S06_Var05)
+
+arima_analysis(S06_Var05.autofit)
+
+```
+
+yeah this one def has autocorrelated residuals.  Try removing the outlier
+
+
+### S06 Var07
+
+#### Manual
+
+The ACF of the differenced series cut off after 1 lag, while the PACF trailed on for a while.  Could be just one MA term, maybey 2
+
+```{r}
+S06_Var07.fit <- Arima(S06_Var07, order = c(0, 1, 2), include.drift = FALSE)
+
+arima_analysis(S06_Var07.fit)
+
+```
+
+
+#### Automatic
+
+```{r}
+S06_Var07.autofit <- auto.arima(S06_Var07)
+
+arima_analysis(S06_Var07.autofit)
+
+```
+
+
+Autocorrelated residuals
+
+
+
+
+
+
