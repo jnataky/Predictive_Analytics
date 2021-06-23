@@ -4,8 +4,8 @@ author: Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhair
   Chhatbar
 date: "6/6/2021"
 output:
-  word_document: default
   html_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -32,20 +32,23 @@ library(forecast)
 ### The data
 
 Read the excel file
-```{r}
 
-df <- readxl::read_excel("Data_Set_for_Class.xls")
+```{r, message=FALSE, warning=FALSE}
+url<-"https://github.com/jnataky/Predictive_Analytics/raw/main/Project1/Data_Set_for_Class.xls"
+temp.file <- paste(tempfile(),".xls",sep = "")
+download.file(url, temp.file, mode = "wb")
+
+dataset <- read_excel(temp.file, sheet = 1)
 
 ```
 
 
+
 Convert the series index to date
 ```{r}
-df <- df %>%
+df <- dataset %>%
   mutate(SeriesInd = as.Date(SeriesInd, origin="1900-01-01"))
-
 head(df)
-
 ```
 
 ```{r}
@@ -60,58 +63,104 @@ df %>%
 
 Missing data is distributed within the same observations for the most part.  Group has negligable effect on missing values.  
 There are about 140 missing observations per group which are the number to forecast.
+Drop NA Values
+```{r}
+df <- df %>% gather("Var", "Value", 3:7) %>% drop_na()
+```
+
+### Visulizations
+
+```{r, fig.width=15, fig.height=20}
+
+df$Day <- weekdays(df$SeriesInd)
+df %>% ggplot( aes(x=SeriesInd, y=Value, color=group))  + facet_wrap(~Var, scales = "free", ncol = 1) + geom_line() +
+  labs(title = "Var Trends by Groups") 
+```
+
+```{r, message=FALSE, warning=FALSE}
+day_summary <- df %>% select(group, Var, Day) %>% group_by(group, Var, Day) %>% summarise(Days=n()) 
+day_summary %>% ggplot( aes(fill=group, y=Days, x=Day)) + geom_bar(position="dodge", stat="identity") + facet_wrap(~Var, scales = "free", ncol = 2) + 
+  labs(title="Day Distribution")
+```
+
 
 ### Time series
 
 Separating data by group to make different time series
-
-```{r}
-s01 <- subset(df[,c("group","Var01","Var02")], group == "S01")
-s01$group <- NULL
-s01 <- ts(s01)
-
-s02 <- subset(df[,c("group","Var02","Var03")], group == "S02")
-s02$group <- NULL
-s02 <- ts(s02)
-
-s03 <- subset(df[,c("group","Var05","Var07")], group == "S03")
-s03$group <- NULL
-s03 <- ts(s03)
-
-s04 <- subset(df[,c("group","Var01","Var02")], group == "S04")
-s04$group <- NULL
-s04 <- ts(s04)
-
-s05 <- subset(df[,c("group","Var02","Var03")], group == "S05")
-s05$group <- NULL
-s05 <- ts(s05)
-
-s06 <- subset(df[,c("group","Var05","Var07")], group == "S06")
-s06$group <- NULL
-s06 <- ts(s06)
-
-series <- list(s01, s02, s03, s04, s05, s06)
-
+#### S01 Var01
+```{r, warning=FALSE}
+S01_Var01 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 365)
+S01_Var01 %>% decompose(type="multiplicative") %>% autoplot()
 ```
 
 
-### Visualization
 
-Autoplot each group with its assigned variables...
-
-```{r warning=FALSE}
-
-autoplot(series[[1]][,1], main =  "s01, var 1")
-autoplot(series[[1]][,2], main =  "s01, var 2")
-autoplot(series[[2]][,1], main =  "s02, var 2")
-autoplot(series[[2]][,2], main =  "s02, var 3")
-autoplot(series[[3]][,1], main =  "s03, var 5")
-autoplot(series[[3]][,2], main =  "s03, var 7")
-autoplot(series[[4]][,1], main =  "s04, var 1")
-autoplot(series[[4]][,2], main =  "s04, var 2")
-autoplot(series[[5]][,1], main =  "s05, var 2")
-autoplot(series[[5]][,2], main =  "s05, var 3")
-autoplot(series[[6]][,1], main =  "s06, var 5")
-autoplot(series[[6]][,2], main =  "s06, var 7")
-
+#### S01 Var02
+```{r, warning=FALSE}
+S01_Var02 <- ts(df %>% filter(group == "S01", Var=="Var02") %>% select(Value), frequency = 365)
+S01_Var02 %>% decompose(type="multiplicative") %>% autoplot()
 ```
+
+#### S02 Var02
+```{r, warning=FALSE}
+S02_Var02 <- ts(df %>% filter(group == "S02", Var=="Var02") %>% select(Value), frequency = 365)
+S02_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+#### S02 Var03
+```{r, warning=FALSE}
+S02_Var03 <- ts(df %>% filter(group == "S02", Var=="Var03") %>% select(Value), frequency = 365)
+S02_Var03 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+#### S03 Var05
+```{r, warning=FALSE}
+S03_Var05 <- ts(df %>% filter(group == "S03", Var=="Var05") %>% select(Value), frequency = 365)
+S03_Var05 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+#### S03 Var07
+```{r, warning=FALSE}
+S03_Var07 <- ts(df %>% filter(group == "S03", Var=="Var07") %>% select(Value), frequency = 365)
+S03_Var07 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+#### S04 Var01
+```{r, warning=FALSE}
+S04_Var01 <- ts(df %>% filter(group == "S04", Var=="Var01") %>% select(Value), frequency = 365)
+S04_Var01 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+#### S04 Var02
+```{r, warning=FALSE}
+S04_Var02 <- ts(df %>% filter(group == "S04", Var=="Var02") %>% select(Value), frequency = 365)
+S04_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+#### S05 Var02
+```{r, warning=FALSE}
+S05_Var02 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 365)
+S05_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+#### S05 Var03
+```{r, warning=FALSE}
+S05_Var03 <- ts(df %>% filter(group == "S05", Var=="Var03") %>% select(Value), frequency = 365)
+S05_Var03 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+#### S06 Var05
+```{r, warning=FALSE}
+S06_Var05 <- ts(df %>% filter(group == "S06", Var=="Var05") %>% select(Value), frequency = 365)
+S06_Var05 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+#### S06 Var07
+```{r, warning=FALSE}
+S06_Var07 <- ts(df %>% filter(group == "S06", Var=="Var07") %>% select(Value), frequency = 365)
+S06_Var07 %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+
+
+
