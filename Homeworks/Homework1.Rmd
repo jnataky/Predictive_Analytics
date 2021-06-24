@@ -2,7 +2,7 @@
 title: 'Predictive Analysis: First Half Semester Homework'
 author: Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav
   Chhatbar
-date: "6/6/2021"
+date: "6/23/2021"
 output:
   word_document: default
   html_document: default
@@ -402,6 +402,10 @@ corrplot(correlations)
 ```
 
 
+One thing to ntocise is that there is a stronger correlation between Ca and RI.
+
+
+
 b. Do there appear to be any outliers in the data? Are any predictors skewed?
 
 Let plot boxplot to visualize the outliers
@@ -442,6 +446,15 @@ skewValues
 
 From the skewness values, we can say that except Na which is a bit close to normal, 
 all the other predictors are skewed with Si being the least skewed.
+
+Below are the details on skewness (rule of thumb) for each variable
+
+- RI, K, Ca, Ba, Fe: Highly right skewed 
+- Na: fairly symmetrical 
+- Mg: Left skewed
+- Al: moderately right skewed 
+- Si: Moderately left skewed 
+
 
 
 c. Are there any relevant transformations of one or more predictors that
@@ -489,7 +502,7 @@ spots, mold growth). The outcome labels consist of 19 distinct classes.
 
 
 
-### Explore the data
+**Explore the data**
 
 Let first get an idea on the variables
 
@@ -587,8 +600,10 @@ a. Use the ses() function in R to find the optimal values of
 α and ℓ0, and generate forecasts for the next four months.
 
 
+We will use ses function then explore the summary to get the optimal values of  
+α and ℓ0, and generate the forecast
 ```{r}
-pigs_ses <- ses(pigs, h = 4, initial = "optimal")
+pigs_ses <- ses(pigs, h = 4)
 
 summary(pigs_ses)
 
@@ -605,6 +620,8 @@ y±1.96s where s is the standard deviation of the residuals.
 Compare your interval with the interval produced by R.
 
 
+Let compute first that 95% prediction interval using  
+y±1.96s 
 
 ```{r}
 pigs_resd <- sd(pigs_ses$residuals) 
@@ -617,14 +634,14 @@ print(paste("95% CI: ", lower , "  ---  ", upper))
 
 ```
 
-My 95% interval is above, the mean of R's is below
+Using R, we have:
 
 ```{r}
 print(paste("lower : ", mean(pigs_ses$lower[1,2])))
 print(paste("upper : ", mean(pigs_ses$upper[1,2])))
 ```
 
-They are very similar
+As results, both methods produce very similar intervals.
 
 
 
@@ -666,7 +683,7 @@ ses(ts(seq(1,10,1)), h = 1, alpha = 0.80, lambda = 10)
 ```
 
 
-Almost gets it, but it's a bit low.
+Almost gets it. The custom function gets the forecast close to ses function.
 
 
 ## Problem 8: HA 7.3
@@ -676,7 +693,59 @@ Modify your function from the previous exercise to return the sum of squared err
 α and ℓ0. Do you get the same values as the ses() function?
 
 
+Modifying custom_ses
 
+```{r}
+
+# Change the argument of previous function to a vector (vec) and y
+
+custom_ses_modified <- function(vec = c(alpha, l0), y) {
+  
+  # initialization 
+  
+  alpha <- vec[1]
+  l0 <- vec[2]
+  y_hat <- l0
+  
+  sse <- 0
+  err <- 0
+  
+  for (i in 1:length(y)) {
+    
+    err <- y[i] - y_hat
+    sse <- sse + err**2
+    
+    y_hat <- alpha*y[i] + (1 - alpha)*y_hat
+    
+  }
+  
+  return (sse)
+
+}
+  
+```
+
+
+Calculating the optimal values of alpha and l0 from the custom function:
+```{r}
+
+test1 <- optim(par=c(0.8, pigs[1]), y = pigs, fn = custom_ses_modified)
+
+paste0("optimal value of alpha is: ", round(test1$par[1], 5))
+
+paste0("optimal value of l0 is: ", round(test1$par[2], 2))
+
+```
+
+Calculating alpha and l0 using ses function:
+
+```{r}
+
+pigs_ses$model$par
+```
+
+The optimal values of alpha and l0 from the custom function are closer
+to the ones using ses function.
 
 
 ## Problem 9: HA 8.1
@@ -686,6 +755,7 @@ Figure \@ref(fig:wnacfplus) shows the ACFs for 36 random numbers, 360 random num
 
 
 a. Explain the differences among these figures. Do they all indicate that the data are white noise?
+
 
 ```{r wnacfplus, fig.asp=0.4, echo=FALSE, fig.cap="Left: ACF for a white noise series of 36 numbers. Middle: ACF for a white noise series of 360 numbers. Right: ACF for a white noise series of 1,000 numbers."}
     x1 <- rnorm(36)
@@ -730,14 +800,18 @@ plot(ibmclose)
 
 ```
 
-above is a plot of daiily closing prices (dollars) over about a year (in days).  It's self evident that the series is non stationary.
 
+Above is a plot of daily closing prices (dollars) over about a year (in days).  It's self evident that the series is non stationary.
+
+Plotting ACF
 ```{r}
 acf(ibmclose, lag.max = 368)
 ```
 
 The ACF plot above shows that there were consistant changes over time to the data.  A stationary series would look like a random walk around the middle, without clear pattern.
 
+
+Plotting partial ACF
 ```{r}
 pacf(ibmclose, lag.max = 368)
 ```
@@ -749,9 +823,7 @@ Above we observe a large spike at the first lag (near 1.0) followed by insignifi
 
 ## Problem 11: HA 8.6
 
-
 Use R to simulate and plot some data from simple ARIMA models.
-
 
 a. Use the following R code to generate data from an AR(1) model with $\phi_{1} = 0.6$ and $\sigma^2=1$. The process starts with $y_1=0$.
     
@@ -814,15 +886,13 @@ for(i in 2:100)
 plot(y, main = k)
 ```
 
-
-
 It would seem that the value at one observation becomes more dependent on the value of the last observation as ϕ1 increases.  In other words, the data is more autocorrelated with higher ϕ1 values.
 
 
 c. Write your own code to generate data from an MA(1) model with $\theta_{1}  =  0.6$ and $\sigma^2=1$.
 
 
-Will be very similar to the AR data generator, but will consider the last value of 'e' instead of 'y'
+It will be very similar to the AR data generator, but will consider the last value of 'e' instead of 'y'
 
 ```{r}
 y <- ts(numeric(100))
@@ -840,7 +910,7 @@ print(head(y))
 d. Produce a time plot for the series. How does the plot change as you change $\theta_1$?
 
 
-Copy pasted from part b with minor changes
+Using similar codes as in part b with minor change, we have:
 
 ```{r}
 par(mfrow=c(2,3))
@@ -907,7 +977,7 @@ They seem to become more of a random walk as θ1 increases from -1 to 1.
 e. Generate data from an ARMA(1,1) model with $\phi_{1} = 0.6$, $\theta_{1}  = 0.6$ and $\sigma^2=1$.
 
 
-Gonna copy paste it again with a slight change
+Applying same process as in previous part:
 
 ```{r}
 y <- ts(numeric(100))
@@ -992,7 +1062,8 @@ summary(fit)
 
 Above is the model that was selected.  It selected what is essentially a random walk model with drift.  Below are a plain residuals plot and an acf plot of the residuals along with a histogram of the residuals.
 
-```{r}
+```{r, warming = FALSE}
+
 checkresiduals(fit$residuals)
 ```
 
@@ -1071,7 +1142,8 @@ fit <- Arima(austa, order = c(0, 2, 1),include.drift = 1, include.constant = 0)
 autoplot(forecast(fit))
 ```
 
-This is linear exponential smoothing.  It produces a widening range of forcasts.  The widening appears to occur at a linear rate for the most part.
+This is linear exponential smoothing.  It produces a widening range of forecasts.  
+The widening appears to occur at a linear rate for the most part.
 
 
 

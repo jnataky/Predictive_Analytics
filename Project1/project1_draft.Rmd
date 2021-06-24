@@ -831,4 +831,3 @@ arima_analysis(S06_Var07.autofit)
 Much better.  Use this one.
 
 
-
