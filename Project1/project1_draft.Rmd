@@ -25,9 +25,9 @@ library(seasonal)
 library(ggfortify)
 library(urca)
 library(forecast)
-
 library(aTSA)
 
+```
 
 ## Data Exploration & Preparation
 
@@ -63,7 +63,8 @@ df %>%
             var7_NAsum = sum(is.na(Var07)))
 ```
 
-Missing data is distributed within the same observations for the most part.  Group has negligable effect on missing values.  
+Missing data i
+s distributed within the same observations for the most part.  Group has negligable effect on missing values.  
 There are about 140 missing observations per group which are the number to forecast.
 Drop NA Values
 ```{r}
@@ -93,6 +94,7 @@ Nearly uniform but has consistant slight differences across variables
 ### Time series
 
 Separating data by group to make different time series
+
 #### S01 Var01
 ```{r, warning=FALSE}
 S01_Var01 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 365)
