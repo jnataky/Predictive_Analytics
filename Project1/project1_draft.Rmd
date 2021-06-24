@@ -25,9 +25,9 @@ library(seasonal)
 library(ggfortify)
 library(urca)
 library(forecast)
-
 library(aTSA)
 
+```
 
 ## Data Exploration & Preparation
 
@@ -63,7 +63,8 @@ df %>%
             var7_NAsum = sum(is.na(Var07)))
 ```
 
-Missing data is distributed within the same observations for the most part.  Group has negligable effect on missing values.  
+Missing data i
+s distributed within the same observations for the most part.  Group has negligable effect on missing values.  
 There are about 140 missing observations per group which are the number to forecast.
 Drop NA Values
 ```{r}
@@ -93,17 +94,18 @@ Nearly uniform but has consistant slight differences across variables
 ### Time series
 
 Separating data by group to make different time series
+
 #### S01 Var01
 ```{r, warning=FALSE}
-S01_Var01 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 365)
-S01_Var01 %>% decompose(type="multiplicative") %>% autoplot()
+S01_Var01 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 1)
+autoplot(S01_Var01)
+
 
 Acf(S01_Var01)
 Pacf(S01_Var01, lag.max = 10) 
 
 adf.test(S01_Var01) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S01_Var01) #Determines how many first differences are nessicary
-nsdiffs(S01_Var01) #Determines if we need seasonal differncing
 
 #Differenced acf/pacf plots
 
@@ -126,15 +128,14 @@ Both the ACF and PACF of the differenced series start positive, and become insig
 
 #### S01 Var02
 ```{r, warning=FALSE}
-S01_Var02 <- ts(df %>% filter(group == "S01", Var=="Var02") %>% select(Value), frequency = 365)
-S01_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+S01_Var02 <- ts(df %>% filter(group == "S01", Var=="Var02") %>% select(Value), frequency = 1)
+autoplot(S01_Var02)
 
 Acf(S01_Var02)
 pacf(S01_Var02)
 
 adf.test(S01_Var02) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S01_Var02) #Determines how many first differences are nessicary
-nsdiffs(S01_Var02) #Determines if we need seasonal differncing
 
 #Differenced acf/pacf plots
 
@@ -158,15 +159,14 @@ The ACF of the differenced series the ACF of the differenced series cuts off mor
 
 #### S02 Var02
 ```{r, warning=FALSE}
-S02_Var02 <- ts(df %>% filter(group == "S02", Var=="Var02") %>% select(Value), frequency = 365)
-S02_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+S02_Var02 <- ts(df %>% filter(group == "S02", Var=="Var02") %>% select(Value), frequency = 1)
+autoplot(S02_Var02)
 
 Acf(S02_Var02)
 Pacf(S02_Var02)
 
 adf.test(S02_Var02) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S02_Var02) #Determines how many first differences are nessicary
-nsdiffs(S02_Var02) #Determines if we need seasonal differncing
 
 #Differenced acf/pacf plots
 
@@ -186,8 +186,9 @@ The ACF of the differenced series the ACF of the differenced series cuts off mor
 
 #### S02 Var03
 ```{r, warning=FALSE}
-S02_Var03 <- ts(df %>% filter(group == "S02", Var=="Var03") %>% select(Value), frequency = 365)
-S02_Var03 %>% decompose(type="multiplicative") %>% autoplot()
+S02_Var03 <- ts(df %>% filter(group == "S02", Var=="Var03") %>% select(Value), frequency = 1) %>% tsclean()
+autoplot(S02_Var03)
+
 
 
 Acf(S02_Var03)
@@ -195,7 +196,6 @@ Pacf(S02_Var03, lag.max = 10)
 
 adf.test(S02_Var03) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S02_Var03) #Determines how many first differences are nessicary
-nsdiffs(S02_Var03) #Determines if we need seasonal differncing
 
 #Differenced acf/pacf plots
 
@@ -204,7 +204,9 @@ Pacf(diff(S02_Var03), lag.max = 10)
 
 ```
 
-Not stationary; season, maybe not trend?
+A nice big outlier here.  It was removed with tsclean()
+
+Not stationary; maybe not trend?
 
 needs 1 first differencing
 
@@ -215,15 +217,14 @@ ACF of the differenced series cuts off from a negative value very quickly, indic
 
 #### S03 Var05
 ```{r, warning=FALSE}
-S03_Var05 <- ts(df %>% filter(group == "S03", Var=="Var05") %>% select(Value), frequency = 365)
-S03_Var05 %>% decompose(type="multiplicative") %>% autoplot()
+S03_Var05 <- ts(df %>% filter(group == "S03", Var=="Var05") %>% select(Value), frequency = 1)
+autoplot(S03_Var05)
 
 Acf(S03_Var05)
 Pacf(S03_Var05, lag.max = 10)
 
 adf.test(S03_Var05) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S03_Var05) #Determines how many first differences are nessicary
-nsdiffs(S03_Var05) #Determines if we need seasonal differncing
 
 #Differenced acf/pacf plots
 
@@ -232,7 +233,7 @@ Pacf(diff(S03_Var05), lag.max = 10)
 
 ```
 
-non-stationary; trend and season
+non-stationary; trend 
 
 needs 1 first differencing
 
@@ -243,15 +244,14 @@ Both PACF and ACF of the differenced series cut off after 1 lag.  Maybe one MA a
 
 #### S03 Var07
 ```{r, warning=FALSE}
-S03_Var07 <- ts(df %>% filter(group == "S03", Var=="Var07") %>% select(Value), frequency = 365)
-S03_Var07 %>% decompose(type="multiplicative") %>% autoplot()
+S03_Var07 <- ts(df %>% filter(group == "S03", Var=="Var07") %>% select(Value), frequency = 1)
+autoplot(S03_Var07)
 
 Acf(S03_Var07)
 Pacf(S03_Var07, lag.max = 10)
 
 adf.test(S03_Var07) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S03_Var07) #Determines how many first differences are nessicary
-nsdiffs(S03_Var07) #Determines if we need seasonal differncing
 
 
 Acf(diff(S03_Var07), lag.max = 10)
@@ -259,7 +259,7 @@ Pacf(diff(S03_Var07), lag.max = 10)
 
 ```
 
-non-stationary; trend and season
+non-stationary; trend and
 
 needs 1 first differencing
 
@@ -270,15 +270,14 @@ No significant lags in either ACF of PACF of the differenced series.  This one h
 
 #### S04 Var01
 ```{r, warning=FALSE}
-S04_Var01 <- ts(df %>% filter(group == "S04", Var=="Var01") %>% select(Value), frequency = 365)
-S04_Var01 %>% decompose(type="multiplicative") %>% autoplot()
+S04_Var01 <- ts(df %>% filter(group == "S04", Var=="Var01") %>% select(Value), frequency = 1)
+autoplot(S04_Var01) 
 
 Acf(S04_Var01)
 Pacf(S04_Var01, lag.max = 10)
 
 adf.test(S04_Var01) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S04_Var01) #Determines how many first differences are nessicary
-nsdiffs(S04_Var01) #Determines if we need seasonal differncing
 
 Acf(diff(S04_Var01), lag.max = 10)
 Pacf(diff(S04_Var01), lag.max = 10) 
@@ -286,7 +285,7 @@ Pacf(diff(S04_Var01), lag.max = 10)
 
 ```
 
-non-stationary; trend and season
+non-stationary; trend
 
 needs 1 first difference
 
@@ -298,15 +297,14 @@ No significant lags in either ACF of PACF of the differenced series.  This one h
 
 #### S04 Var02
 ```{r, warning=FALSE}
-S04_Var02 <- ts(df %>% filter(group == "S04", Var=="Var02") %>% select(Value), frequency = 365)
-S04_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+S04_Var02 <- ts(df %>% filter(group == "S04", Var=="Var02") %>% select(Value), frequency = 1)
+autoplot(S04_Var02) 
 
 Acf(S04_Var02)
 Pacf(S04_Var02, lag.max = 10)
 
 adf.test(S04_Var02) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S04_Var02) #Determines how many first differences are nessicary
-nsdiffs(S04_Var02) #Determines if we need seasonal differncing
 
 
 Acf(diff(S04_Var02), lag.max = 10)
@@ -326,15 +324,14 @@ A high number of significant lags in the PACF of the differenced series, and a f
 
 #### S05 Var02
 ```{r, warning=FALSE}
-S05_Var02 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 365)
-S05_Var02 %>% decompose(type="multiplicative") %>% autoplot()
+S05_Var02 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 1)
+autoplot(S05_Var02)
 
 Acf(S05_Var02)
 Pacf(S05_Var02)
 
 adf.test(S05_Var02) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S05_Var02) #Determines how many first differences are nessicary
-nsdiffs(S05_Var02) #Determines if we need seasonal differncing
 
 Acf(diff(S05_Var02), lag.max = 10)
 Pacf(diff(S05_Var02), lag.max = 10) 
@@ -342,7 +339,7 @@ Pacf(diff(S05_Var02), lag.max = 10)
 
 ```
 
-non-stationary; trend and seasonal
+non-stationary; trend 
 
 needs 1 first difference
 
@@ -353,22 +350,22 @@ Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR b
 
 #### S05 Var03
 ```{r, warning=FALSE}
-S05_Var03 <- ts(df %>% filter(group == "S05", Var=="Var03") %>% select(Value), frequency = 365)
-S05_Var03 %>% decompose(type="multiplicative") %>% autoplot()
+S05_Var03 <- ts(df %>% filter(group == "S05", Var=="Var03") %>% select(Value), frequency = 1)
+autoplot(S05_Var03)
 
 Acf(S05_Var03)
 Pacf(S05_Var03)
 
 adf.test(S05_Var03) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S05_Var03) #Determines how many first differences are nessicary
-nsdiffs(S05_Var03) #Determines if we need seasonal differncing
+
 
 Acf(diff(S05_Var03), lag.max = 10)
 Pacf(diff(S05_Var03), lag.max = 10) 
 
 ```
 
-non-stationary (probably); seasonal, probably trend
+non-stationary (probably); probably trend
 
 needs 1 first difference
 
@@ -379,21 +376,23 @@ Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR b
 
 
 #### S06 Var05
+
 ```{r, warning=FALSE}
-S06_Var05 <- ts(df %>% filter(group == "S06", Var=="Var05") %>% select(Value), frequency = 365)
-S06_Var05 %>% decompose(type="multiplicative") %>% autoplot()
+S06_Var05 <- ts(df %>% filter(group == "S06", Var=="Var05") %>% select(Value), frequency = 1) %>% tsclean()
+autoplot(S06_Var05)
 
 Acf(S06_Var05)
 Pacf(S06_Var05)
 
 adf.test(S06_Var05) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S06_Var05) #Determines how many first differences are nessicary
-nsdiffs(S06_Var05) #Determines if we need seasonal differncing
 
 Acf(diff(S06_Var05), lag.max = 10)
 Pacf(diff(S06_Var05), lag.max = 20) 
 
 ```
+
+needed outlier cleaning
 
 non-stationary
 
@@ -406,20 +405,21 @@ The ACF of the differenced series cut off after 1 lag, while the PACF trailed on
 
 #### S06 Var07
 ```{r, warning=FALSE}
-S06_Var07 <- ts(df %>% filter(group == "S06", Var=="Var07") %>% select(Value), frequency = 365)
-S06_Var07 %>% decompose(type="multiplicative") %>% autoplot()
+S06_Var07 <- ts(df %>% filter(group == "S06", Var=="Var07") %>% select(Value), frequency = 1) %>% tsclean()
+autoplot(S06_Var07) 
 
 Acf(S06_Var07)
 Pacf(S06_Var07)
 
 adf.test(S06_Var07) #Unit root test.  This tests if differencing is nessiary
 ndiffs(S06_Var07) #Determines how many first differences are nessicary
-nsdiffs(S06_Var07) #Determines if we need seasonal differncing
 
 Acf(diff(S06_Var07), lag.max = 10)
 Pacf(diff(S06_Var07), lag.max = 20) 
 
 ```
+
+needed outlier cleaning
 
 non-stationary
 
@@ -439,11 +439,20 @@ Also this for helping determine the number of AR/MA terms: https://people.duke.e
 
 We'll try selecting ARIMA models based on our observations of the data, and by using the auto.arima() function to find one automatically.
 
+When it comes to testing for correlations among residuals, we'll use Box-Ljung tests.  We'll use ln(n) as the number of lags, where n is the number of residuals.  There's not much consensus out there on how many lags to use (pretty sure R automatically uses the frequency, but this isn't great), but hopefully this'l do.
+
+
+Note: because all datasets indicate 1 differencing is appropriate, d (the 'I' in arima) is always going to be 1.  Could do ARMA models on the differenced timeseries, but ARIMA saves some code.  
+
+
+
+
 ##### Some common observations:
 
 Everything seems to require differencing 1 time. 
 
 No seasonal differencing was nessicariry; likely no seasonal trends
+
 
 
 ### S01 Var01
@@ -459,7 +468,7 @@ We'll try out ARIMA 2, 1, 1.  There is a trend, so drift should be included
 arima_analysis <- function(fit) {
   print(summary(fit))
   
-  checkresiduals(fit)
+  checkresiduals(fit, lag = log(length(fit$residuals)))
 }
 ```
 
@@ -468,6 +477,8 @@ arima_analysis <- function(fit) {
 S01_Var01.fit <- Arima(S01_Var01, order = c(2, 1, 1), include.drift = TRUE)
 
 arima_analysis(S01_Var01.fit)
+
+
 
 ```
 
@@ -502,15 +513,39 @@ S01_Var02.fit <- Arima(S01_Var02, order = c(3, 1, 1), include.drift = FALSE)
 
 arima_analysis(S01_Var02.fit)
 
+qqnorm(S01_Var02.fit$residuals)
+qqline(S01_Var02.fit$residuals)
 ```
 
+ARIMA 3, 1, 1 yielded some significantly correlated residuals, indicating this model isn't a great fit.  QQplot and the historgram indicate that the residuals are not normally distributed.  Let's see how an automatic fit does.
+
+#### automatic
 
 ```{r}
 S01_Var02.autofit <- auto.arima(S01_Var02)
 
 arima_analysis(S01_Var02.autofit)
 
+qqnorm(S01_Var02.autofit$residuals)
+qqline(S01_Var02.autofit$residuals)
 ```
+
+This doesn't do well either.  let's try a log transform and do again
+
+#### Log transform automatic
+
+```{r}
+S01_Var02.autofit <- auto.arima(log(S01_Var02))
+
+arima_analysis(S01_Var02.autofit)
+
+qqnorm(S01_Var02.autofit$residuals)
+qqline(S01_Var02.autofit$residuals)
+```
+
+Much better.  Residuals here have a normal distribution with a mean of approximately 0.  Box-Ljung test found insignificant correlation between residuals.  QQ looks acceptable.
+
+Use this one, but make sure to account for the log transform.
 
 ### S02 Var02
 
@@ -528,6 +563,7 @@ arima_analysis(S02_Var02.fit)
 
 ```
 
+Ljung-Box finds the residuals to be correlated.  Let's see what automatic does
 
 #### Automatic
 
@@ -538,6 +574,20 @@ arima_analysis(S02_Var02.autofit)
 
 ```
 
+Not gonna do it.  Let's try a log transform again.
+
+#### Second manual with log transform 
+
+```{r}
+S02_Var02.fit <- Arima(log(S02_Var02), c(1,1,4))
+
+arima_analysis(S02_Var02.fit)
+
+qqnorm(S02_Var02.fit$residuals)
+qqline(S02_Var02.fit$residuals)
+```
+
+Auto arima here wasn't cutting it, even with the log transform.  ARIMA 1, 1, 4 on the log transformed data seems a good balance between maximizing log liklihood, and minimizing AICc.  Use this one.
 
 ### S02 Var03
 
@@ -552,10 +602,11 @@ S02_Var03.fit <- Arima(S02_Var03, order = c(2, 1, 1), include.drift = TRUE)
 
 arima_analysis(S02_Var03.fit)
 
+autoplot(tsclean(S02_Var03))
+
 ```
 
-
-
+There is significant correlation between residuals.  Let's try automatic.
 
 #### Automatic
 
@@ -566,6 +617,18 @@ arima_analysis(S02_Var03.autofit)
 
 ```
 
+Slightly worse AICc and log likelihood, but tecnically insignificant correlation between residuals.  That being said, it's pretty close.  Could try a log transformation.
+
+#### automatic with log transformation
+
+```{r}
+S02_Var03.autofit <- auto.arima(log(S02_Var03))
+
+arima_analysis(S02_Var03.autofit)
+
+```
+
+Less significant correlation between residuals, but now the other statistics don't compare with the previous models.  Make of this what you will.  
 
 ### S03 Var05
 
@@ -580,6 +643,8 @@ arima_analysis(S03_Var05.fit)
 
 ```
 
+Fits well.
+
 #### Automatic
 
 ```{r}
@@ -587,7 +652,10 @@ S03_Var05.autofit <- auto.arima(S03_Var05)
 
 arima_analysis(S03_Var05.autofit)
 
+
 ```
+
+Similar ARIMA 1, 1, 1 does slighly better in terms of log liklihood but slightly worse in AIC.  Go with ARIMA 1, 1, 1 (manual)?
 
 ### S03 Var07
 
@@ -596,9 +664,11 @@ arima_analysis(S03_Var05.autofit)
 No significant lags in either ACF of PACF of the differenced series.  This one has no AR or MA terms
 
 ```{r}
-S03_Var07.fit <- Arima(S03_Var07, order = c(0, 1, 0), include.drift = TRUE)
+S03_Var07.fit <- Arima(S03_Var07, order = c(0, 1, 0), include.drift = FALSE)
 
 arima_analysis(S03_Var07.fit)
+
+
 
 ```
 
@@ -610,6 +680,8 @@ S03_Var07.autofit <- auto.arima(S03_Var07)
 arima_analysis(S03_Var07.autofit)
 
 ```
+
+Automatic does the same thing.  Go with either (theyre literally the same model)
 
 ### S04 Var01
 
@@ -633,6 +705,8 @@ arima_analysis(S04_Var01.autofit)
 
 ```
 
+Same story: go with either model (they're both the same)
+
 ### S04 Var02
 
 #### Manual
@@ -644,19 +718,37 @@ S04_Var02.fit <- Arima(S04_Var02, order = c(4, 1, 2), include.drift = FALSE)
 
 arima_analysis(S04_Var02.fit)
 
+qqnorm(S04_Var02.fit$residuals)
+qqline(S04_Var02.fit$residuals)
 ```
 
+Insignificant correlation betwen residuals, but the residuals are skewed.  Let's try again with a log transform.
 
-
-#### Automatic
+#### Manual with log transformation
 
 ```{r}
-S04_Var02.autofit <- auto.arima(S04_Var02)
+S04_Var02.fit <- Arima(log(S04_Var02), order = c(4, 1, 2), include.drift = FALSE)
+
+arima_analysis(S04_Var02.fit)
+
+qqnorm(S04_Var02.fit$residuals)
+qqline(S04_Var02.fit$residuals)
+```
+
+Definitely a better model.  We'll try an automatic fit with log transformation for comparison.
+
+#### Automatic with log transformation
+
+```{r}
+S04_Var02.autofit <- auto.arima(log(S04_Var02))
 
 arima_analysis(S04_Var02.autofit)
 
+qqnorm(S04_Var02.fit$residuals)
+qqline(S04_Var02.fit$residuals)
 ```
 
+Automatic here has correlated residuals.  The manual model (ARIMA 4, 1, 2 no drift) of the log transformed time series does better on in terms of log likelihood and AICc, along with having no significant correlations among residuals.  Use the Manual ARIMA model with the log transformation
 
 
 ### S05 Var02
@@ -672,6 +764,8 @@ arima_analysis(S05_Var02.fit)
 
 ```
 
+Works.  Looks good.
+
 #### Automatic
 
 ```{r}
@@ -681,9 +775,10 @@ arima_analysis(S05_Var02.autofit)
 
 ```
 
+This automatic model (ARIMA 0, 1, 2 with drift) works better than the manual one.  Has Higher log likelihood and lower AICc.  Use this one.
 
 ### S06 Var05
-
+ 
 #### Manual
 
 The ACF of the differenced series cut off after 1 lag, while the PACF trailed on for a while.  Could be just one MA term, maybey 2
@@ -695,6 +790,7 @@ arima_analysis(S06_Var05.fit)
 
 ```
 
+Has correlated residuals.  No bueno.
 
 #### Automatic
 
@@ -705,7 +801,7 @@ arima_analysis(S06_Var05.autofit)
 
 ```
 
-yeah this one def has autocorrelated residuals.  Try removing the outlier
+Better.  No correlated residuals.  Use this one.
 
 
 ### S06 Var07
@@ -721,6 +817,7 @@ arima_analysis(S06_Var07.fit)
 
 ```
 
+Works, but only just.  Technically insignificant correlation between residuals, but..
 
 #### Automatic
 
@@ -731,11 +828,7 @@ arima_analysis(S06_Var07.autofit)
 
 ```
 
-
-Autocorrelated residuals
-
-
-
+Much better.  Use this one.
 
 
 
