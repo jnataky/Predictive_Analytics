@@ -13,8 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-## Libraries
-```{r, warning = FALSE, message=FALSE}
+```{r include=FALSE}
 library(dplyr)
 library(forecast)
 library(readxl)
@@ -26,21 +25,28 @@ library(ggfortify)
 library(urca)
 library(forecast)
 library(aTSA)
+library(kableExtra)
 
 ```
+
+
+## Introduction
+
 
 ## Data Exploration & Preparation
 
 ### The data
 
-Read the excel file
+Read the excel file and get the insight on the data
 
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 url<-"https://github.com/jnataky/Predictive_Analytics/raw/main/Project1/Data_Set_for_Class.xls"
 temp.file <- paste(tempfile(),".xls",sep = "")
 download.file(url, temp.file, mode = "wb")
 
 dataset <- read_excel(temp.file, sheet = 1)
+
+str(dataset)
 
 ```
 
@@ -50,13 +56,15 @@ Converting the series index to date format:
 Assuming that the data represent stock data, we are going to convert 
 the series index in date using 1990-01-02 as reference to allow us to have
 only week days which will make sense for stock data.
-```{r}
+```{r include=FALSE}
 df <- dataset %>%
   mutate(SeriesInd = as.Date(SeriesInd, origin="1900-01-02"))
 head(df)
 ```
 
-```{r}
+
+
+```{r include=FALSE}
 df %>%
   group_by(group) %>%
   summarise(var1_NAsum = sum(is.na(Var01)),
@@ -66,31 +74,35 @@ df %>%
             var7_NAsum = sum(is.na(Var07)))
 ```
 
-Missing data i
-s distributed within the same observations for the most part.  Group has negligable effect on missing values.  
+Missing data are distributed within the same observations for the most part.  Group has negligeable effect on missing values.  
 There are about 140 missing observations per group which are the number to forecast.
+
 Drop NA Values
-```{r}
+
+```{r include=FALSE}
 df <- df %>% gather("Var", "Value", 3:7) %>% drop_na()
 ```
 
-### Visulizations
+### Visualizations
 
-```{r, fig.width=15, fig.height=20}
+
+```{r, fig.width=15, fig.height=20, include=FALSE}
 
 df$Day <- weekdays(df$SeriesInd)
 df %>% ggplot( aes(x=SeriesInd, y=Value, color=group))  + facet_wrap(~Var, scales = "free", ncol = 1) + geom_line() +
   labs(title = "Var Trends by Groups") 
 ```
 
-```{r, message=FALSE, warning=FALSE}
+
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 day_summary <- df %>% select(group, Var, Day) %>% group_by(group, Var, Day) %>% summarise(Days=n()) 
 day_summary %>% ggplot( aes(fill=group, y=Days, x=Day)) + geom_bar(position="dodge", stat="identity") + facet_wrap(~Var, scales = "free", ncol = 2) + 
   labs(title="Day Distribution")
 ```
 
 
-Nearly uniform but has consistant slight differences across variables
+Nearly uniform but has consistent slight differences across variables
 
 
 
@@ -98,8 +110,9 @@ Nearly uniform but has consistant slight differences across variables
 
 Separating data by group to make different time series
 
+
 #### S01 Var01
-```{r, warning=FALSE}
+```{r, include=FALSE}
 S01_Var01 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 1)
 autoplot(S01_Var01)
 
@@ -118,6 +131,7 @@ Pacf(diff(S01_Var01), lag.max = 10)
 
 ```
 
+
 non-stationary; trend
 needs 1 first differencing
 
@@ -130,7 +144,8 @@ Both the ACF and PACF of the differenced series start positive, and become insig
 
 
 #### S01 Var02
-```{r, warning=FALSE}
+
+```{r, include=FALSE}
 S01_Var02 <- ts(df %>% filter(group == "S01", Var=="Var02") %>% select(Value), frequency = 1)
 autoplot(S01_Var02)
 
@@ -161,7 +176,8 @@ The ACF of the differenced series the ACF of the differenced series cuts off mor
 
 
 #### S02 Var02
-```{r, warning=FALSE}
+
+```{r, include=FALSE}
 S02_Var02 <- ts(df %>% filter(group == "S02", Var=="Var02") %>% select(Value), frequency = 1)
 autoplot(S02_Var02)
 
@@ -188,7 +204,8 @@ The ACF of the differenced series the ACF of the differenced series cuts off mor
 
 
 #### S02 Var03
-```{r, warning=FALSE}
+
+```{r, include=FALSE}
 S02_Var03 <- ts(df %>% filter(group == "S02", Var=="Var03") %>% select(Value), frequency = 1) %>% tsclean()
 autoplot(S02_Var03)
 
@@ -219,7 +236,8 @@ ACF of the differenced series cuts off from a negative value very quickly, indic
 
 
 #### S03 Var05
-```{r, warning=FALSE}
+
+```{r, include=FALSE}
 S03_Var05 <- ts(df %>% filter(group == "S03", Var=="Var05") %>% select(Value), frequency = 1)
 autoplot(S03_Var05)
 
@@ -246,7 +264,8 @@ Both PACF and ACF of the differenced series cut off after 1 lag.  Maybe one MA a
 
 
 #### S03 Var07
-```{r, warning=FALSE}
+
+```{r, include=FALSE}
 S03_Var07 <- ts(df %>% filter(group == "S03", Var=="Var07") %>% select(Value), frequency = 1)
 autoplot(S03_Var07)
 
@@ -272,7 +291,8 @@ No significant lags in either ACF of PACF of the differenced series.  This one h
 
 
 #### S04 Var01
-```{r, warning=FALSE}
+
+```{r, include=FALSE}
 S04_Var01 <- ts(df %>% filter(group == "S04", Var=="Var01") %>% select(Value), frequency = 1)
 autoplot(S04_Var01) 
 
@@ -299,7 +319,8 @@ No significant lags in either ACF of PACF of the differenced series.  This one h
 
 
 #### S04 Var02
-```{r, warning=FALSE}
+
+```{r, include=FALSE}
 S04_Var02 <- ts(df %>% filter(group == "S04", Var=="Var02") %>% select(Value), frequency = 1)
 autoplot(S04_Var02) 
 
@@ -326,7 +347,9 @@ A high number of significant lags in the PACF of the differenced series, and a f
 
 
 #### S05 Var02
-```{r, warning=FALSE}
+
+
+```{r, include=FALSE}
 S05_Var02 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 1)
 autoplot(S05_Var02)
 
@@ -352,7 +375,8 @@ Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR b
 
 
 #### S05 Var03
-```{r, warning=FALSE}
+
+```{r, include=FALSE}
 S05_Var03 <- ts(df %>% filter(group == "S05", Var=="Var03") %>% select(Value), frequency = 1)
 autoplot(S05_Var03)
 
@@ -380,7 +404,7 @@ Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR b
 
 #### S06 Var05
 
-```{r, warning=FALSE}
+```{r, include=FALSE}
 S06_Var05 <- ts(df %>% filter(group == "S06", Var=="Var05") %>% select(Value), frequency = 1) %>% tsclean()
 autoplot(S06_Var05)
 
@@ -407,7 +431,8 @@ The ACF of the differenced series cut off after 1 lag, while the PACF trailed on
 
 
 #### S06 Var07
-```{r, warning=FALSE}
+
+```{r, include=FALSE}
 S06_Var07 <- ts(df %>% filter(group == "S06", Var=="Var07") %>% select(Value), frequency = 1) %>% tsclean()
 autoplot(S06_Var07) 
 
@@ -466,7 +491,7 @@ Both the ACF and PACF of the differenced series start positive, and become insig
 
 We'll try out ARIMA 2, 1, 1.  There is a trend, so drift should be included
 
-```{r}
+```{r include=FALSE}
 #First a little function.  Takes an arima model and does the analyses/residual-visualizations
 arima_analysis <- function(fit) {
   print(summary(fit))
@@ -476,7 +501,7 @@ arima_analysis <- function(fit) {
 ```
 
 
-```{r}
+```{r include=FALSE}
 S01_Var01.fit <- Arima(S01_Var01, order = c(2, 1, 1), include.drift = TRUE)
 
 arima_analysis(S01_Var01.fit)
@@ -489,7 +514,7 @@ The residuals have a mean of approximately 0 and are distributed normally.  Howe
 
 #### Auto ARIMA
 
-```{r}
+```{r include=FALSE}
 S01_Var01.autofit <- auto.arima(S01_Var01)
 
 arima_analysis(S01_Var01.autofit)
@@ -511,7 +536,7 @@ The ACF of the differenced series the ACF of the differenced series cuts off mor
 
 We'll go with ARIMA 3,1,1 with no drift
 
-```{r}
+```{r include=FALSE}
 S01_Var02.fit <- Arima(S01_Var02, order = c(3, 1, 1), include.drift = FALSE)
 
 arima_analysis(S01_Var02.fit)
@@ -524,7 +549,7 @@ ARIMA 3, 1, 1 yielded some significantly correlated residuals, indicating this m
 
 #### automatic
 
-```{r}
+```{r include=FALSE}
 S01_Var02.autofit <- auto.arima(S01_Var02)
 
 arima_analysis(S01_Var02.autofit)
@@ -537,7 +562,7 @@ This doesn't do well either.  let's try a log transform and do again
 
 #### Log transform automatic
 
-```{r}
+```{r include=FALSE}
 S01_Var02.autofit <- auto.arima(log(S01_Var02))
 
 arima_analysis(S01_Var02.autofit)
@@ -559,7 +584,7 @@ The ACF of the differenced series the ACF of the differenced series cuts off mor
 We'll go with ARIMA 3,1,1 with no drift
 
 
-```{r}
+```{r include=FALSE}
 S02_Var02.fit <- Arima(S02_Var02, order = c(3, 1, 1), include.drift = FALSE)
 
 arima_analysis(S02_Var02.fit)
@@ -570,7 +595,7 @@ Ljung-Box finds the residuals to be correlated.  Let's see what automatic does
 
 #### Automatic
 
-```{r}
+```{r include=FALSE}
 S02_Var02.autofit <- auto.arima(S02_Var02)
 
 arima_analysis(S02_Var02.autofit)
@@ -581,7 +606,7 @@ Not gonna do it.  Let's try a log transform again.
 
 #### Second manual with log transform 
 
-```{r}
+```{r include=FALSE}
 S02_Var02.fit <- Arima(log(S02_Var02), c(1,1,4))
 
 arima_analysis(S02_Var02.fit)
@@ -600,7 +625,7 @@ ACF of the differenced series cuts off from a negative value very quickly, indic
 
 We'll go with ARIMA 2, 1, 1 with drift
 
-```{r}
+```{r include=FALSE}
 S02_Var03.fit <- Arima(S02_Var03, order = c(2, 1, 1), include.drift = TRUE)
 
 arima_analysis(S02_Var03.fit)
@@ -613,18 +638,18 @@ There is significant correlation between residuals.  Let's try automatic.
 
 #### Automatic
 
-```{r}
+```{r include=FALSE}
 S02_Var03.autofit <- auto.arima(S02_Var03)
 
 arima_analysis(S02_Var03.autofit)
 
 ```
 
-Slightly worse AICc and log likelihood, but tecnically insignificant correlation between residuals.  That being said, it's pretty close.  Could try a log transformation.
+Slightly worse AICc and log likelihood, but technically insignificant correlation between residuals.  That being said, it's pretty close.  Could try a log transformation.
 
 #### automatic with log transformation
 
-```{r}
+```{r include=FALSE}
 S02_Var03.autofit <- auto.arima(log(S02_Var03))
 
 arima_analysis(S02_Var03.autofit)
@@ -639,7 +664,7 @@ Less significant correlation between residuals, but now the other statistics don
 
 Both PACF and ACF of the differenced series cut off after 1 lag.  Maybe one MA and AR term with no drift
 
-```{r}
+```{r include=FALSE}
 S03_Var05.fit <- Arima(S03_Var05, order = c(1, 1, 1), include.drift = FALSE)
 
 arima_analysis(S03_Var05.fit)
@@ -650,7 +675,7 @@ Fits well.
 
 #### Automatic
 
-```{r}
+```{r include=FALSE}
 S03_Var05.autofit <- auto.arima(S03_Var05)
 
 arima_analysis(S03_Var05.autofit)
@@ -666,7 +691,7 @@ Similar ARIMA 1, 1, 1 does slighly better in terms of log liklihood but slightly
 
 No significant lags in either ACF of PACF of the differenced series.  This one has no AR or MA terms
 
-```{r}
+```{r include=FALSE}
 S03_Var07.fit <- Arima(S03_Var07, order = c(0, 1, 0), include.drift = FALSE)
 
 arima_analysis(S03_Var07.fit)
@@ -677,14 +702,14 @@ arima_analysis(S03_Var07.fit)
 
 #### Automatic
 
-```{r}
+```{r include=FALSE}
 S03_Var07.autofit <- auto.arima(S03_Var07)
 
 arima_analysis(S03_Var07.autofit)
 
 ```
 
-Automatic does the same thing.  Go with either (theyre literally the same model)
+Automatic does the same thing. We will this one.
 
 ### S04 Var01
 
@@ -692,7 +717,7 @@ Automatic does the same thing.  Go with either (theyre literally the same model)
 
 No significant lags in either ACF of PACF of the differenced series.  This one has no AR or MA terms
 
-```{r}
+```{r include=FALSE}
 S04_Var01.fit <- Arima(S04_Var01, order = c(0, 1, 0), include.drift = FALSE)
 
 arima_analysis(S04_Var01.fit)
@@ -701,7 +726,7 @@ arima_analysis(S04_Var01.fit)
 
 #### Automatic
 
-```{r}
+```{r include=FALSE}
 S04_Var01.autofit <- auto.arima(S04_Var01)
 
 arima_analysis(S04_Var01.autofit)
@@ -716,7 +741,7 @@ Same story: go with either model (they're both the same)
 
 A high number of significant lags in the PACF of the differenced series, and a few significant lags in the ACF.  Probably a higher number of AR terms, maybe a couple MA terms
 
-```{r}
+```{r include=FALSE}
 S04_Var02.fit <- Arima(S04_Var02, order = c(4, 1, 2), include.drift = FALSE)
 
 arima_analysis(S04_Var02.fit)
@@ -729,7 +754,7 @@ Insignificant correlation betwen residuals, but the residuals are skewed.  Let's
 
 #### Manual with log transformation
 
-```{r}
+```{r include=FALSE}
 S04_Var02.fit <- Arima(log(S04_Var02), order = c(4, 1, 2), include.drift = FALSE)
 
 arima_analysis(S04_Var02.fit)
@@ -742,7 +767,7 @@ Definitely a better model.  We'll try an automatic fit with log transformation f
 
 #### Automatic with log transformation
 
-```{r}
+```{r include=FALSE}
 S04_Var02.autofit <- auto.arima(log(S04_Var02))
 
 arima_analysis(S04_Var02.autofit)
@@ -760,7 +785,7 @@ Automatic here has correlated residuals.  The manual model (ARIMA 4, 1, 2 no dri
 
 Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR because PACF starts positive
 
-```{r}
+```{r include=FALSE}
 S05_Var02.fit <- Arima(S05_Var02, order = c(2, 1, 1), include.drift = FALSE)
 
 arima_analysis(S05_Var02.fit)
@@ -771,7 +796,7 @@ Works.  Looks good.
 
 #### Automatic
 
-```{r}
+```{r include=FALSE}
 S05_Var02.autofit <- auto.arima(S05_Var02)
 
 arima_analysis(S05_Var02.autofit)
@@ -786,7 +811,7 @@ This automatic model (ARIMA 0, 1, 2 with drift) works better than the manual one
 
 The ACF of the differenced series cut off after 1 lag, while the PACF trailed on for a while.  Could be just one MA term, maybey 2
 
-```{r}
+```{r include=FALSE}
 S06_Var05.fit <- Arima(S06_Var05, order = c(0, 1, 2), include.drift = FALSE)
 
 arima_analysis(S06_Var05.fit)
@@ -797,7 +822,7 @@ Has correlated residuals.  No bueno.
 
 #### Automatic
 
-```{r}
+```{r include=FALSE}
 S06_Var05.autofit <- auto.arima(S06_Var05)
 
 arima_analysis(S06_Var05.autofit)
@@ -813,7 +838,7 @@ Better.  No correlated residuals.  Use this one.
 
 The ACF of the differenced series cut off after 1 lag, while the PACF trailed on for a while.  Could be just one MA term, maybey 2
 
-```{r}
+```{r include=FALSE}
 S06_Var07.fit <- Arima(S06_Var07, order = c(0, 1, 2), include.drift = FALSE)
 
 arima_analysis(S06_Var07.fit)
@@ -824,7 +849,7 @@ Works, but only just.  Technically insignificant correlation between residuals, 
 
 #### Automatic
 
-```{r}
+```{r include=FALSE}
 S06_Var07.autofit <- auto.arima(S06_Var07)
 
 arima_analysis(S06_Var07.autofit)
@@ -832,5 +857,93 @@ arima_analysis(S06_Var07.autofit)
 ```
 
 Much better.  Use this one.
+
+
+
+## Model selection
+
+Based on reasons described above for each model, the following is 
+the summary table for the model selection.
+
+```{r include=FALSE}
+
+group <- c('S01', 'S02', 'S03', 'S04', 'S05', 'S06')
+
+model_selected <- c('S01_Var02.autofit', 'S02_Var02.fit', 'S03_Var07.autofit', 'S04_Var02.fit', 'S05_Var02.autofit', 'S06_Var07.autofit')
+
+arima_type <- c('Log transform automatic', 'Manual with log transformation', 'Automatic', 'Manual with log transformation', 'Automatic', 'Automatic' )
+
+
+df <- data.frame(group, model_selected, arima_type)
+
+df %>%
+  kbl(caption = "Model selection", align = 'c') %>%
+  kable_material(c("striped", "hover")) %>%
+  row_spec(0, color = 'indigo')
+
+
+```
+
+
+
+
+
+
+
+## Forecasting
+
+
+
+
+
+
+
+
+## Appendex
+
+
+
+```{r}
+
+library(dplyr)
+library(forecast)
+library(readxl)
+library(skimr)
+library(tidyr)
+library(dplyr)
+library(seasonal)
+library(ggfortify)
+library(urca)
+library(forecast)
+library(aTSA)
+library(kableExtra)
+
+
+url<-"https://github.com/jnataky/Predictive_Analytics/raw/main/Project1/Data_Set_for_Class.xls"
+temp.file <- paste(tempfile(),".xls",sep = "")
+download.file(url, temp.file, mode = "wb")
+
+dataset <- read_excel(temp.file, sheet = 1)
+
+str(dataset)
+
+
+
+df <- dataset %>%
+  mutate(SeriesInd = as.Date(SeriesInd, origin="1900-01-02"))
+head(df)
+
+df %>%
+  group_by(group) %>%
+  summarise(var1_NAsum = sum(is.na(Var01)),
+            var2_NAsum = sum(is.na(Var02)),
+            var3_NAsum = sum(is.na(Var03)),
+            var5_NAsum = sum(is.na(Var05)),
+            var7_NAsum = sum(is.na(Var07)))
+
+df <- df %>% gather("Var", "Value", 3:7) %>% drop_na()
+```
+
+
 
 
