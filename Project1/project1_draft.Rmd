@@ -2,7 +2,7 @@
 title: 'Predictive Analysis Project1 : Forecasting'
 author: Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav
   Chhatbar
-date: "6/6/2021"
+date: "6/25/2021"
 output:
   html_document: default
   word_document: default
@@ -46,10 +46,13 @@ dataset <- read_excel(temp.file, sheet = 1)
 
 
 
-Convert the series index to date
+Converting the series index to date format:
+Assuming that the data represent stock data, we are going to convert 
+the series index in date using 1990-01-02 as reference to allow us to have
+only week days which will make sense for stock data.
 ```{r}
 df <- dataset %>%
-  mutate(SeriesInd = as.Date(SeriesInd, origin="1900-01-01"))
+  mutate(SeriesInd = as.Date(SeriesInd, origin="1900-01-02"))
 head(df)
 ```
 
