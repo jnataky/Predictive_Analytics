@@ -805,6 +805,38 @@ arima_analysis(S05_Var02.autofit)
 
 This automatic model (ARIMA 0, 1, 2 with drift) works better than the manual one.  Has Higher log likelihood and lower AICc.  Use this one.
 
+### S05 Var03
+
+#### Manual
+
+Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR because PACF starts positive.  Will add drift because of trend towards the end of the series.
+
+```{r}
+S05_Var03.fit <- Arima(S05_Var03, order = c(2, 1, 1), include.drift = TRUE)
+
+arima_analysis(S05_Var03.fit)
+
+
+```
+
+No problems here.  Let's see what auto comes up with
+
+
+#### Automatic
+
+
+```{r}
+S05_Var03.autofit <- auto.arima(S05_Var03)
+
+arima_analysis(S05_Var03.autofit)
+
+
+```
+
+auto.arima came up with ARIMA 2,1,1; the same as the manually selected model without drift.  I think the manual model would be more appropriate.  It makes sense to have drift.
+
+
+
 ### S06 Var05
  
 #### Manual
@@ -1211,15 +1243,13 @@ S05_Var02_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 #### Var 03 
 
-Missing Model - used Var02 as a place holder
-
 ```{r}
 # Standard Package 
-plot(forecast::forecast(S05_Var02.autofit, h=140))
+plot(forecast::forecast(S05_Var03.fit, h=140))
 
 
 # GG Plot
-S05_Var03.forcast <- forecast::forecast(S05_Var02.autofit, h=140) 
+S05_Var03.forcast <- forecast::forecast(S05_Var03.fit, h=140) 
 
 S05_Var03.forcast <- data.frame(S05_Var03.forcast)
 
