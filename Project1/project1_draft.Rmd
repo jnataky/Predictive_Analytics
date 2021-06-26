@@ -893,11 +893,427 @@ df
 
 ## Forecasting
 
+### Group S01 
+
+#### Var 02 
+
+```{r}
+# Standard Package
+plot(forecast::forecast(S01_Var02.autofit, h=140))
+
+
+# GG Plot
+S01_Var02.forcast <- forecast::forecast(S01_Var02.autofit, h=140) 
+
+S01_Var02.forcast <- data.frame(S01_Var02.forcast)
+
+S01_Var02.forcast <- exp(S01_Var02.forcast$Point.Forecast)
+
+
+S01_Var02_df.a <- data.frame(S01_Var02,"actual")
+names(S01_Var02_df.a) <- c("val","cat")
+
+S01_Var02_df.b <- data.frame(as.numeric(S01_Var02.forcast ),"forcast")
+names(S01_Var02_df.b) <- c("val","cat")
+
+
+S01_Var02_df <- rbind(S01_Var02_df.a,S01_Var02_df.b)
+
+S01_Var02_df$num <- as.numeric(row.names(S01_Var02_df))
+
+S01_Var02_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S01_Var02.forcast
+
+
+```
+
+#### Var 01 
+
+```{r}
+# Standard Package
+plot(forecast::forecast(S01_Var01.fit, h=140))
+
+
+# GG Plot
+S01_Var01.forcast <- forecast::forecast(S01_Var01.fit, h=140) 
+
+S01_Var01.forcast <- data.frame(S01_Var01.forcast)
+
+S01_Var01.forcast <- S01_Var01.forcast$Point.Forecast
+
+
+S01_Var01_df.a <- data.frame(S01_Var01,"actual")
+names(S01_Var01_df.a) <- c("val","cat")
+
+S01_Var01_df.b <- data.frame(as.numeric(S01_Var01.forcast ),"forcast")
+names(S01_Var01_df.b) <- c("val","cat")
+
+
+S01_Var01_df <- rbind(S01_Var01_df.a,S01_Var01_df.b)
+
+S01_Var01_df$num <- as.numeric(row.names(S01_Var01_df))
+
+S01_Var01_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S01_Var01.forcast
+
+
+```
 
 
 
+### Group S02 
+
+#### Var 02 
+
+```{r}
+# Standard Package
+plot(forecast::forecast(S02_Var02.fit, h=140))
 
 
+# GG Plot
+S02_Var02.forcast <- forecast::forecast(S02_Var02.fit, h=140) 
+
+S02_Var02.forcast <- data.frame(S02_Var02.forcast)
+
+S02_Var02.forcast <- exp(S02_Var02.forcast$Point.Forecast)
+
+
+S02_Var02_df.a <- data.frame(S02_Var02,"actual")
+names(S02_Var02_df.a) <- c("val","cat")
+
+S02_Var02_df.b <- data.frame(as.numeric(S02_Var02.forcast ),"forcast")
+names(S02_Var02_df.b) <- c("val","cat")
+
+
+S02_Var02_df <- rbind(S02_Var02_df.a,S02_Var02_df.b)
+
+S02_Var02_df$num <- as.numeric(row.names(S02_Var02_df))
+
+S02_Var02_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S02_Var02.forcast
+
+
+```
+
+
+#### Var 03 
+
+```{r}
+# Standard Package
+plot(forecast::forecast(S02_Var03.autofit , h=140))
+
+
+# GG Plot
+S02_Var03.forcast <- forecast::forecast(S02_Var03.autofit , h=140) 
+
+S02_Var03.forcast <- data.frame(S02_Var03.forcast)
+
+S02_Var03.forcast <- exp(S02_Var03.forcast$Point.Forecast)
+
+
+S02_Var03_df.a <- data.frame(S02_Var03,"actual")
+names(S02_Var03_df.a) <- c("val","cat")
+
+S02_Var03_df.b <- data.frame(as.numeric(S02_Var03.forcast ),"forcast")
+names(S02_Var03_df.b) <- c("val","cat")
+
+
+S02_Var03_df <- rbind(S02_Var03_df.a,S02_Var03_df.b)
+
+S02_Var03_df$num <- as.numeric(row.names(S02_Var03_df))
+
+S02_Var03_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S02_Var03.forcast
+
+
+```
+
+
+
+### Group S03 
+
+#### Var 05 
+
+```{r}
+# Standard Package 
+plot(forecast::forecast(S03_Var05.fit, h=140))
+
+
+# GG Plot
+S03_Var05.forcast <- forecast::forecast(S03_Var05.fit, h=140) 
+
+S03_Var05.forcast <- data.frame(S03_Var05.forcast)
+
+S03_Var05.forcast <- S03_Var05.forcast$Point.Forecast
+
+
+S03_Var05_df.a <- data.frame(S03_Var05,"actual")
+names(S03_Var05_df.a) <- c("val","cat")
+
+S03_Var05_df.b <- data.frame(as.numeric(S03_Var05.forcast ),"forcast")
+names(S03_Var05_df.b) <- c("val","cat")
+
+
+S03_Var05_df <- rbind(S03_Var05_df.a,S03_Var05_df.b)
+
+S03_Var05_df$num <- as.numeric(row.names(S03_Var05_df))
+
+S03_Var05_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S03_Var05.forcast
+
+
+```
+
+
+#### Var 07 
+
+```{r}
+# Standard Package 
+plot(forecast::forecast(S03_Var07.fit, h=140))
+
+
+# GG Plot
+S03_Var07.forcast <- forecast::forecast(S03_Var07.autofit, h=140) 
+
+S03_Var07.forcast <- data.frame(S03_Var07.forcast)
+
+S03_Var07.forcast <- S03_Var07.forcast$Point.Forecast
+
+
+S03_Var07_df.a <- data.frame(S03_Var07,"actual")
+names(S03_Var07_df.a) <- c("val","cat")
+
+S03_Var07_df.b <- data.frame(as.numeric(S03_Var07.forcast ),"forcast")
+names(S03_Var07_df.b) <- c("val","cat")
+
+
+S03_Var07_df <- rbind(S03_Var07_df.a,S03_Var07_df.b)
+
+S03_Var07_df$num <- as.numeric(row.names(S03_Var07_df))
+
+S03_Var07_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S03_Var07.forcast
+
+
+```
+
+
+### Group S04 
+
+#### Var 02
+
+```{r}
+# Standard Package 
+plot(forecast::forecast(S04_Var02.fit, h=140))
+
+
+# GG Plot
+S04_Var02.forcast <- forecast::forecast(S04_Var02.fit, h=140) 
+
+S04_Var02.forcast <- data.frame(S04_Var02.forcast)
+
+S04_Var02.forcast <- exp(S04_Var02.forcast$Point.Forecast)
+
+
+S04_Var02_df.a <- data.frame(S04_Var02,"actual")
+names(S04_Var02_df.a) <- c("val","cat")
+
+S04_Var02_df.b <- data.frame(as.numeric(S04_Var02.forcast ),"forcast")
+names(S04_Var02_df.b) <- c("val","cat")
+
+
+S04_Var02_df <- rbind(S04_Var02_df.a,S04_Var02_df.b)
+
+S04_Var02_df$num <- as.numeric(row.names(S04_Var02_df))
+
+S04_Var02_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S04_Var02.forcast
+
+
+```
+
+
+#### Var 01
+
+```{r}
+# Standard Package 
+plot(forecast::forecast(S04_Var01.fit, h=140))
+
+
+# GG Plot
+S04_Var01.forcast <- forecast::forecast(S04_Var01.fit, h=140) 
+
+S04_Var01.forcast <- data.frame(S04_Var01.forcast)
+
+S04_Var01.forcast <- S04_Var01.forcast$Point.Forecast
+
+
+S04_Var01_df.a <- data.frame(S04_Var01,"actual")
+names(S04_Var01_df.a) <- c("val","cat")
+
+S04_Var01_df.b <- data.frame(as.numeric(S04_Var01.forcast ),"forcast")
+names(S04_Var01_df.b) <- c("val","cat")
+
+
+S04_Var01_df <- rbind(S04_Var01_df.a,S04_Var01_df.b)
+
+S04_Var01_df$num <- as.numeric(row.names(S04_Var01_df))
+
+S04_Var01_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S04_Var01.forcast
+
+
+```
+
+
+### Group S05 
+
+#### Var 02 
+
+```{r}
+# Standard Package 
+plot(forecast::forecast(S05_Var02.autofit, h=140))
+
+
+# GG Plot
+S05_Var02.forcast <- forecast::forecast(S05_Var02.autofit, h=140) 
+
+S05_Var02.forcast <- data.frame(S05_Var02.forcast)
+
+S05_Var02.forcast <- S05_Var02.forcast$Point.Forecast
+
+
+S05_Var02_df.a <- data.frame(S05_Var02,"actual")
+names(S05_Var02_df.a) <- c("val","cat")
+
+S05_Var02_df.b <- data.frame(as.numeric(S05_Var02.forcast ),"forcast")
+names(S05_Var02_df.b) <- c("val","cat")
+
+
+S05_Var02_df <- rbind(S05_Var02_df.a,S05_Var02_df.b)
+
+S05_Var02_df$num <- as.numeric(row.names(S05_Var02_df))
+
+S05_Var02_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S05_Var02.forcast
+
+
+```
+
+#### Var 03 
+
+Missing Model - used Var02 as a place holder
+
+```{r}
+# Standard Package 
+plot(forecast::forecast(S05_Var02.autofit, h=140))
+
+
+# GG Plot
+S05_Var03.forcast <- forecast::forecast(S05_Var02.autofit, h=140) 
+
+S05_Var03.forcast <- data.frame(S05_Var03.forcast)
+
+S05_Var03.forcast <- S05_Var03.forcast$Point.Forecast
+
+
+S05_Var03_df.a <- data.frame(S05_Var03,"actual")
+names(S05_Var03_df.a) <- c("val","cat")
+
+S05_Var03_df.b <- data.frame(as.numeric(S05_Var03.forcast ),"forcast")
+names(S05_Var03_df.b) <- c("val","cat")
+
+
+S05_Var03_df <- rbind(S05_Var03_df.a,S05_Var03_df.b)
+
+S05_Var03_df$num <- as.numeric(row.names(S05_Var03_df))
+
+S05_Var03_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S05_Var03.forcast
+
+
+```
+
+
+
+### Group S06 
+
+#### Var 07 
+
+```{r}
+# Standard Package 
+plot(forecast::forecast(S06_Var07.autofit, h=140))
+
+
+# GG Plot
+S06_Var07.forcast <- forecast::forecast(S06_Var07.autofit, h=140) 
+
+S06_Var07.forcast <- data.frame(S06_Var07.forcast)
+
+S06_Var07.forcast <- S06_Var07.forcast$Point.Forecast
+
+
+S06_Var07_df.a <- data.frame(S06_Var07,"actual")
+names(S06_Var07_df.a) <- c("val","cat")
+
+S06_Var07_df.b <- data.frame(as.numeric(S06_Var07.forcast ),"forcast")
+names(S06_Var07_df.b) <- c("val","cat")
+
+
+S06_Var07_df <- rbind(S06_Var07_df.a,S06_Var07_df.b)
+
+S06_Var07_df$num <- as.numeric(row.names(S06_Var07_df))
+
+S06_Var07_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S06_Var07.forcast
+
+
+```
+
+
+#### Var 05 
+
+```{r}
+# Standard Package 
+plot(forecast::forecast(S06_Var05.autofit, h=140))
+
+
+# GG Plot
+S06_Var05.forcast <- forecast::forecast(S06_Var05.autofit, h=140) 
+
+S06_Var05.forcast <- data.frame(S06_Var05.forcast)
+
+S06_Var05.forcast <- S06_Var05.forcast$Point.Forecast
+
+
+S06_Var05_df.a <- data.frame(S06_Var05,"actual")
+names(S06_Var05_df.a) <- c("val","cat")
+
+S06_Var05_df.b <- data.frame(as.numeric(S06_Var05.forcast ),"forcast")
+names(S06_Var05_df.b) <- c("val","cat")
+
+
+S06_Var05_df <- rbind(S06_Var05_df.a,S06_Var05_df.b)
+
+S06_Var05_df$num <- as.numeric(row.names(S06_Var05_df))
+
+S06_Var05_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
+
+# Value List = S06_Var05.forcast
+
+
+```
 
 
 ## Appendex
