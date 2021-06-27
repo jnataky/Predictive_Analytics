@@ -350,7 +350,7 @@ A high number of significant lags in the PACF of the differenced series, and a f
 
 
 ```{r}
-S05_Var02 <- ts(df %>% filter(group == "S01", Var=="Var01") %>% select(Value), frequency = 1)
+S05_Var02 <- ts(df %>% filter(group == "S05", Var=="Var02") %>% select(Value), frequency = 1)
 autoplot(S05_Var02)
 
 Acf(S05_Var02)
@@ -371,7 +371,6 @@ needs 1 first difference
 
 suggestive of autoregressive process
 
-Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR because PACF starts positive
 
 
 #### S05 Var03
@@ -783,27 +782,29 @@ Automatic here has correlated residuals.  The manual model (ARIMA 4, 1, 2 no dri
 
 #### Manual
 
-Similar ACF and PACF of differenced series.  Maybe one of each term, or two AR because PACF starts positive
+Going to try Arima 1, 1, 2 here and see how it does
+
 
 ```{r}
-S05_Var02.fit <- Arima(S05_Var02, order = c(2, 1, 1), include.drift = FALSE)
+S05_Var02.fit <- Arima(S05_Var02, order = c(1, 1, 2), include.drift = FALSE)
 
 arima_analysis(S05_Var02.fit)
 
+
 ```
 
-Works.  Looks good.
+Looks like a log transformation would help.
 
 #### Automatic
 
 ```{r}
-S05_Var02.autofit <- auto.arima(S05_Var02)
+S05_Var02.autofit <- auto.arima(log(S05_Var02))
 
 arima_analysis(S05_Var02.autofit)
 
 ```
 
-This automatic model (ARIMA 0, 1, 2 with drift) works better than the manual one.  Has Higher log likelihood and lower AICc.  Use this one.
+Much better.  The automatic model here works best (Arima 1, 1, 2)
 
 ### S05 Var03
 
@@ -957,6 +958,8 @@ S01_Var02_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S01_Var02.forcast
 
+write.csv(S01_Var02.forcast, "S01_Var02forcast.csv")
+
 
 ```
 
@@ -989,6 +992,8 @@ S01_Var01_df$num <- as.numeric(row.names(S01_Var01_df))
 S01_Var01_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S01_Var01.forcast
+
+write.csv(S01_Var01.forcast, "S01_Var01forcast.csv")
 
 
 ```
@@ -1027,6 +1032,7 @@ S02_Var02_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S02_Var02.forcast
 
+write.csv(S02_Var02.forcast, "S02_Var02forcast.csv")
 
 ```
 
@@ -1060,6 +1066,8 @@ S02_Var03_df$num <- as.numeric(row.names(S02_Var03_df))
 S02_Var03_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S02_Var03.forcast
+
+write.csv(S02_Var03.forcast, "S02_Var03forcast.csv")
 
 
 ```
@@ -1098,6 +1106,8 @@ S03_Var05_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S03_Var05.forcast
 
+write.csv(S03_Var05.forcast, "S03_Var05forcast.csv")
+
 
 ```
 
@@ -1132,6 +1142,7 @@ S03_Var07_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S03_Var07.forcast
 
+write.csv(S03_Var07.forcast, "S03_Var07forcast.csv")
 
 ```
 
@@ -1168,6 +1179,8 @@ S04_Var02_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S04_Var02.forcast
 
+write.csv(S04_Var02.forcast, "S04_Var02forcast.csv")
+
 
 ```
 
@@ -1202,6 +1215,8 @@ S04_Var01_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S04_Var01.forcast
 
+write.csv(S04_Var01.forcast, "S04_Var01forcast.csv")
+
 
 ```
 
@@ -1220,7 +1235,7 @@ S05_Var02.forcast <- forecast::forecast(S05_Var02.autofit, h=140)
 
 S05_Var02.forcast <- data.frame(S05_Var02.forcast)
 
-S05_Var02.forcast <- S05_Var02.forcast$Point.Forecast
+S05_Var02.forcast <- exp(S05_Var02.forcast$Point.Forecast)
 
 
 S05_Var02_df.a <- data.frame(S05_Var02,"actual")
@@ -1237,6 +1252,8 @@ S05_Var02_df$num <- as.numeric(row.names(S05_Var02_df))
 S05_Var02_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S05_Var02.forcast
+
+write.csv(S05_Var02.forcast, "S05_Var02forcast.csv")
 
 
 ```
@@ -1271,6 +1288,7 @@ S05_Var03_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S05_Var03.forcast
 
+write.csv(S05_Var03.forcast, "S05_Var03forcast.csv")
 
 ```
 
@@ -1308,6 +1326,8 @@ S06_Var07_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S06_Var07.forcast
 
+write.csv(S06_Var07.forcast, "S06_Var07forcast.csv")
+
 
 ```
 
@@ -1341,6 +1361,8 @@ S06_Var05_df$num <- as.numeric(row.names(S06_Var05_df))
 S06_Var05_df %>% ggplot(aes(x=num,y=val,col=cat)) + geom_line()
 
 # Value List = S06_Var05.forcast
+
+write.csv(S06_Var05.forcast, "S06_Var05forcast.csv")
 
 
 ```
@@ -1390,7 +1412,6 @@ df %>%
 
 df <- df %>% gather("Var", "Value", 3:7) %>% drop_na()
 ```
-
 
 
 
