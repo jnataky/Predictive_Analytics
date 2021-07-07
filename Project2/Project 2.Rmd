@@ -1,0 +1,87 @@
+---
+title: 'Predictive Analysis Project2 :'
+author: Jered Ataky, Matthew Baker, Christopher Bloome, David Blumenstiel, Dhairav Chhatbar
+date: "7/7/2021"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+library(dplyr)
+library(readxl)
+library(skimr)
+library(tidyr)
+library(kableExtra)
+
+```
+
+
+## Introduction
+<insert intro text>
+
+## Data Prepration
+<insert data load text>
+```{r, message=FALSE, warning=FALSE, message=FALSE}
+url<-"https://github.com/jnataky/Predictive_Analytics/raw/main/Project2/StudentData%20-%20TO%20MODEL.xlsx"
+temp.file <- paste(tempfile(),".xlsx",sep = "")
+download.file(url, temp.file, mode = "wb")
+
+train_dataset <- read_excel(temp.file, sheet = 1)
+
+url<-"https://github.com/jnataky/Predictive_Analytics/raw/main/Project2/StudentEvaluation-%20TO%20PREDICT.xlsx"
+temp.file <- paste(tempfile(),".xlsx",sep = "")
+download.file(url, temp.file, mode = "wb")
+
+test_dataset <- read_excel(temp.file, sheet = 1)
+
+
+```
+
+## Explorative Data Analysis
+<description/discussion of each visual>
+```{r}
+skim(train_dataset)
+```
+
+
+## Data Transformation
+<text of any data transformation that was done>
+```{r}
+
+```
+
+
+## Modeling
+<text on which models are going to be used>
+
+## Model Accuracy
+<show/discuss accuracy of models>
+
+### Model 1: <model name>
+```{r}
+
+```
+
+### Model 2: <model name>
+```{r}
+
+```
+
+### Model 3: <model name>
+```{r}
+
+```
+
+
+## Forcasting & Conclusion
+<text on the chosen model, forcasting, and conclusion>
+```{r}
+
+```
+
+
+
