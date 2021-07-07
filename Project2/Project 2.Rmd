@@ -16,7 +16,7 @@ library(readxl)
 library(skimr)
 library(tidyr)
 library(kableExtra)
-
+library(read)
 ```
 
 
@@ -26,17 +26,11 @@ library(kableExtra)
 ## Data Prepration
 <insert data load text>
 ```{r, message=FALSE, warning=FALSE, message=FALSE}
-url<-"https://github.com/jnataky/Predictive_Analytics/raw/main/Project2/StudentData%20-%20TO%20MODEL.xlsx"
-temp.file <- paste(tempfile(),".xlsx",sep = "")
-download.file(url, temp.file, mode = "wb")
 
-train_dataset <- read_excel(temp.file, sheet = 1)
+train_dataset <- read.csv("https://raw.githubusercontent.com/jnataky/Predictive_Analytics/main/Project2/StudentData%20-%20TO%20MODEL.csv")
+test_dataset <- read.csv("https://raw.githubusercontent.com/jnataky/Predictive_Analytics/main/Project2/StudentEvaluation-%20TO%20PREDICT.csv")
 
-url<-"https://github.com/jnataky/Predictive_Analytics/raw/main/Project2/StudentEvaluation-%20TO%20PREDICT.xlsx"
-temp.file <- paste(tempfile(),".xlsx",sep = "")
-download.file(url, temp.file, mode = "wb")
-
-test_dataset <- read_excel(temp.file, sheet = 1)
+head(train_dataset)
 
 
 ```
