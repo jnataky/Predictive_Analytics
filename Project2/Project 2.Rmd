@@ -16,7 +16,10 @@ library(readxl)
 library(skimr)
 library(tidyr)
 library(kableExtra)
-library(read)
+library(mice)
+library(VIM)
+library(corrplot)
+library(ggcorrplot)
 ```
 
 
@@ -40,6 +43,36 @@ head(train_dataset)
 ```{r}
 skim(train_dataset)
 ```
+```{r, warning=FALSE}
+aggr(train_dataset, col=c('#F8766D','#00BFC4'), numbers=TRUE, sortVars=TRUE, labels=names(train_dataset), cex.axis=.7, gap=3, ylab=c("Missing data","Pattern"))
+```
+
+```{r, warning=FALSE}
+train_dataset %>% select(PH) %>% ggplot( aes(PH)) + geom_density(fill="steelblue", bins = 30)
+```
+
+
+```{r, fig.height=10, warning=FALSE, message=FALSE}
+
+train_dataset %>% select(-PH, -Brand.Code) %>% 
+  tidyr::gather(key = "variable", value = "measurement",everything()) %>% 
+  arrange(desc(variable)) %>%
+  ggplot(aes(measurement)) + geom_density(position=position_dodge(), fill="steelblue") +
+  facet_wrap(~variable, scales = "free") +
+  theme_minimal() + 
+  ggtitle("Distribution of Predictor Variables")
+```
+
+```{r, fig.height=10}
+q <- cor(train_dataset%>%select(-Brand.Code), use = "na.or.complete")
+ggcorrplot(q, type = "lower", outline.color = "white", hc.order = TRUE,
+           colors = c("#6D9EC1", "white", "#E46726"),
+           lab = TRUE, show.legend = FALSE, tl.cex = 8, lab_size = 3) 
+
+
+
+```
+
 
 
 ## Data Transformation
