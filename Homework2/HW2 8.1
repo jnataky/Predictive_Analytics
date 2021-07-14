@@ -1,0 +1,41 @@
+---
+title: "HW2 8.1"
+author: "Dhairav Chhatbar"
+date: "7/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(mlbench)
+library(randomForest)
+library(caret)
+```
+
+
+
+Recreate the simulated data from Exercise 7.2
+```{r, message=FALSE}
+
+set.seed(200)
+simulated <- mlbench.friedman1(200, sd = 1)
+simulated <- cbind(simulated$x, simulated$y)
+simulated <- as.data.frame(simulated)
+colnames(simulated)[ncol(simulated)] <- "y"
+```
+
+Fit a random forest model to all of the predictors, then estimate the variable importance scores:
+```{r}
+model1 <- randomForest(y ~ ., data = simulated, importance = TRUE, ntree = 1000) 
+rfImp1 <- varImp(model1, scale = FALSE)
+rfImp1
+varImpPlot(model1)
+```
+Did the random forest model signiﬁcantly use the uninformative predictors (V6 – V10)?
+  
+From the importance scores we see that Variables V1, V2, V4, and V5, and to an extent V3, but predictors V6-V10 where not used since they have lower purity scores
+
+
