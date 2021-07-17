@@ -6,11 +6,10 @@ output:
   html_document: default
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+## Libraries used
 
-```{r include=FALSE}
+Good to load these in first
+```{r}
 library(dplyr)
 library(readxl)
 library(skimr)
@@ -29,11 +28,14 @@ library("xgboost")
 ```
 
 
-## Introduction
-<insert intro text>
+
 
 ## Data Prepration
-<insert data load text>
+
+Before we can make the models, we need the data in a form we can use.
+
+Below will download the data from GitHub, and save it as a dataframe.
+
 ```{r, message=FALSE, warning=FALSE, message=FALSE}
 
 train_dataset <- read.csv("https://raw.githubusercontent.com/jnataky/Predictive_Analytics/main/Project2/StudentData%20-%20TO%20MODEL.csv")
@@ -49,8 +51,12 @@ head(train_dataset)
 
 ```
 
+Looks good.
+
 ## Explorative Data Analysis
-<description/discussion of each visual>
+
+Now we want to analyse the data.  See the report for a detailed analysis; this produces some figures which are helpful.
+
 ```{r}
 skim(train_dataset)
 ```
@@ -90,7 +96,7 @@ ggcorrplot(q, type = "lower", outline.color = "white", hc.order = TRUE,
 ## Data Transformation
 
 
-Below will impute missing data via pmm, and rename the first column and change it to factor
+Below will impute missing data via pmm using the mice package, and rename the first column and change it to factor
 
 ```{r}
 preprocess <- function(df) {
@@ -117,13 +123,13 @@ evaluation_dataset <- preprocess(evaluation_dataset)
 
 ## Modeling
 
-Going to try to use caret for implementing most of these; it will make things alot easier.
+R has this really nice package called Caret, which gives us a function that allows us to easily train a bunch of models with only minor adjustments.  It can search for optimal parameters, take manual specifications, you name it.  We'll use it to train all of the models.
 
-First, we need split off a test set to judge performance.  We'll do 80:20 train/test
+But, first, we need split off a test set to judge performance.  We'll do 80:20 train/test
 
 ```{r}
-set.seed(1234567890)
-splitdex <- createDataPartition(train_dataset$PH, p = 0.8, list = FALSE)
+set.seed(1234567890) #So you see the same thing I do
+splitdex <- createDataPartition(train_dataset$PH, p = 0.8, list = FALSE) #Index for split
 
 
 train <- train_dataset[splitdex,]
@@ -146,13 +152,15 @@ set.seed(1234567890) #So you see the same thing I do
 #got help from: http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/153-penalized-regression-essentials-ridge-lasso-elastic-net/
 #and: https://stackoverflow.com/questions/57712116/regarding-preprocessing-in-lasso-using-caret-package-in-r
 
+#The parameters we want it to try
 grid <- expand.grid(alpha = 1,
                     lambda =10^seq(-5, 5, length = 1000)) #Lot's of lambda values to choose from
 
+#Adds crossvalidation
 tc = trainControl(method = "cv",   #Cross-validation
                   number = 10)
 
-
+#Fit's the model
 lassoFit <- caret::train(PH ~ ., data = train, 
                   method = "glmnet",   #glmnet lets us fit penalized maximum likelihood glms (lasso, ridge, elastic) 
                   preProcess = c("center", "scale"), #Data needsa to be centered and scaled for this 
@@ -163,17 +171,16 @@ lassoFit$bestTune
 
 coef(lassoFit$finalModel,lassoFit$bestTune$lambda)
 
-varImp(lassoFit$finalModel, lambda = lassoFit$bestTune$lambda)
-
 
 ```
 
-The best model was made using a lambda of 0.00011 ish.  This value was the most effective in terms of reducing RMSE, but it's so low it didn't really get rid of any coefficients .  For our purposes, an accurate model is more important than a simple one, so we'll keep the low alpha.  Let's see how it does on the validation set.
+The best model was made using a lambda of 0.0002 ish.  This value was the most effective in terms of reducing RMSE, but it's so low it didn't really get rid of any coefficients .  For our purposes, an accurate model is more important than a simple one, so we'll keep the low alpha.  Let's see how it does on the validation set.
 
 ```{r}
+#Makes preictions
 lasso_predictions <- predict(lassoFit, test)
 
-
+#Calculates RMSE and R2
 print(paste("RMSE: ", RMSE(lasso_predictions, test$PH), "    R2: ", caret::R2(lasso_predictions, test$PH)))
 
 
@@ -208,7 +215,6 @@ elasticFit$bestTune
 
 coef(elasticFit$finalModel,elasticFit$bestTune$lambda)
 
-varImp(elasticFit$finalModel, lambda = elasticFit$bestTune$lambda)
 
 ```
 
@@ -239,6 +245,7 @@ set.seed(1234567890)
 tc = trainControl(method = "cv",   #Cross-validation
                   number = 10)
 
+#The parameters we want it to try
 grid <- expand.grid(degree = 4:7,   #automatic tune won't let you try more than one of these
                     nprune = seq(60, 150, length = 10))
 
@@ -252,7 +259,7 @@ marsFit <- caret::train(PH ~ ., data = train,
 
 marsFit$bestTune
 
-varImp(marsFit)
+
 ```
 
 
@@ -261,9 +268,10 @@ An initital run showed better performance with the highest degree and number of 
 It found 60 terms and 5 degrees to have the best performance., with an RMSE and R2 around 0.12 and 0.52 respectively.  Let's evaluate on the validation set.
 
 ```{r}
+#Makes preictions
 mars_predictions <- predict(marsFit, test)
 
-
+#Get's RMSE and R2
 print(paste("RMSE: ", RMSE(mars_predictions, test$PH), "    R2: ", caret::R2(mars_predictions, test$PH)))
 
 
@@ -284,10 +292,11 @@ set.seed(1234567890) #so you see what I do
 tc = trainControl(method = "cv",   #Cross-validation
                   number = 10)
 
+#This one automatically tries different parameters
 plsFit <- caret::train(PH ~ ., data = train, 
                         method = "pls",   # from the "pls" package
                         preProcess = c("center", "scale"), 
-                        tuneLength = 32,  #n_var - 1
+                        tuneLength = 32,  #Tries different parameters.  Max in this case is nvar - 1
                         trControl = tc)
 
 plsFit
@@ -318,6 +327,7 @@ set.seed(1234567890) #so you see what I do
 tc = trainControl(method = "cv",   #Cross-validation
                   number = 5)
 
+#Will also try to adjust parameters automatically
 svmFit <- caret::train(PH ~ ., data = train, 
                         method = "svmRadial",   # from the "e1071" package
                         preProcess = c("center", "scale"), 
@@ -351,7 +361,7 @@ set.seed(1234567890) #so you see what I do
 tc <- trainControl(method = "cv",   #Cross-validation
                   number = 5)
 
-
+#Becuase this takes a long time to train, the values below were pre-selected as the best tune from several runs.
 grid <- expand.grid(.mtry = c(18)) 
 
 rfFit <- caret::train(PH ~ ., data = train, 
@@ -390,6 +400,7 @@ set.seed(1234567890) #so you see what I do
 tc <- trainControl(method = "cv",   #Cross-validation
                   number = 5)
 
+#Tries a combinations of the parameters below
 grid <- expand.grid(decay = 10^seq(-3,-0.5,length = 10),
                     size = 1:5)
 
@@ -432,6 +443,7 @@ set.seed(1234567890) #so you see what I do
 tc <- trainControl(method = "cv",   #Cross-validation
                   number = 5)
 
+#Another case where tuning was done seperately due to long runtimes.  The values below are the best selections for both parameters.
 grid = expand.grid(committees = 100,
                    neighbors = 8)
 
@@ -469,6 +481,8 @@ set.seed(1234567890) #so you see what I do
 
 tc <- trainControl(method = "cv",   #Cross-validation
                   number = 5)
+
+#Tries alot of different parameters.  These were narrowed down in seperate training sessisons.
 
 grid <- expand.grid(lambda = c(1.39 * 10^-5, 10^-5, 1.90 * 10^-5),
                     alpha = c(0.0001,0.00046, 0.001),
@@ -510,6 +524,7 @@ set.seed(1234567890) #so you see what I do
 tc <- trainControl(method = "cv",   #Cross-validation
                   number = 5)
 
+#Very simple to tune these types of models.  K is usually like 5
 grid <- expand.grid(k = 1:10)
 
 knnFit <- caret::train(PH ~ ., data = train, 
@@ -541,9 +556,31 @@ Not bad, but not the best.
 
 ### Important variables
 
+
 ```{r}
 varImp(rfFit)
+
+rfFit
 ```
+
+### Residuals
+
+Let's plot out the resiuals
+
+```{r}
+plot(rf_predictions ~ test$PH, main = "Random Forest Predictions vs Fit", #Plot's predictions vs actual
+     xlab = "Actual pH",
+     ylab = "Predicted pH") 
+
+hist(residuals(rfFit), # Histogram of residuals
+     breaks = 50, 
+     xlab = "Residuals", 
+     main = "Random Forest Model Residuals Distribution") 
+
+
+```
+
+
 
 
 
@@ -552,9 +589,11 @@ varImp(rfFit)
 We'll go with random forest.  It performed among the best on the test set.
 
 ```{r}
+#Makes predictions
 evaluation_dataset$PH <- predict(rfFit, evaluation_dataset)
 
-
+#Saves them to wherever you downloaded this 
+write.csv(evaluation_dataset$PH, "Group1_Project2_Predictions.csv") 
 ```
 
 
