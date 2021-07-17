@@ -352,14 +352,14 @@ tc <- trainControl(method = "cv",   #Cross-validation
                   number = 5)
 
 
-grid <- expand.grid(.mtry = 8) 
+grid <- expand.grid(.mtry = c(18)) 
 
 rfFit <- caret::train(PH ~ ., data = train, 
                       method = "rf",   
                       preProcess = c("center", "scale"), 
                       tuneGrid = grid,  
                       trControl = tc,
-                      ntrees = 500)
+                      ntrees = 1000)
 
 rfFit
 ```
@@ -537,8 +537,13 @@ Not bad, but not the best.
 
 
 
-## Model Accuracy
+## Best Model Analysis
 
+### Important variables
+
+```{r}
+varImp(rfFit)
+```
 
 
 
@@ -551,6 +556,5 @@ evaluation_dataset$PH <- predict(rfFit, evaluation_dataset)
 
 
 ```
-
 
 
